@@ -1,5 +1,6 @@
 <?php
 session_start();
+$users_file = "./data/users.json";
 
 // If user is already logged in, redirect to index.php
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
@@ -12,6 +13,10 @@ $error_message = '';
 
 // Process registration form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $existing_users_json = file_get_contents($users_file);
+    $existing_users = json_decode($existing_users_json, true);
+    
+
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
@@ -25,12 +30,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Username is required';
     } elseif (strlen($username) < 3) {
         $errors[] = 'Username must be at least 3 characters long';
+    } else {
+        foreach($existing_users as $user){
+            if($user['username'] === $username){
+                $errors[] = "Username has been taken already.";
+            break;
+            }
+        }
     }
-    
+
     if (empty($email)) {
         $errors[] = 'Email is required';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Invalid email address';
+    }else {
+        foreach($existing_users as $user){
+            if($user['email'] === $email){
+                $errors[] = "Email has registered already.";
+            break;
+            }
+        }
     }
     
     if (empty($password)) {
@@ -44,11 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (empty($errors)) {
-        // Normally the user would be saved to a database here
-        // For this demo we simulate a successful registration through a success message
-        $success_message = 'Registration successful! You can now login with your credentials.';
+        $new_user = [
+            'username' => $username,
+            'email' => $email,
+            'password' => $password
+        ];
+        $existing_users[] = $new_user;
+        $add_user_json = json_encode($existing_users, JSON_PRETTY_PRINT);
+        file_put_contents($users_file, $add_user_json);
         
-        // Reset form fields after successful registration
         $username = $email = $phone = '';
     } else {
         $error_message = implode('<br>', $errors);

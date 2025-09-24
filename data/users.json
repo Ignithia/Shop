@@ -1,0 +1,17 @@
+[
+    {
+        "username": "ryan",
+        "email": "ryan@shop.com",
+        "password": "password123"
+    },
+    {
+        "username": "gamer123",
+        "email": "gamer@example.com",
+        "password": "game2024"
+    },
+    {
+        "username": "Bob",
+        "email": "bob@store.com",
+        "password": "thisisatest"
+    }
+]

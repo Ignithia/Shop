@@ -10,18 +10,18 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 $error_message = '';
 
 // Mock user database (in a real app, this would be in a database)
-$users = [
-    [
-        'username' => 'ryan',
-        'email' => 'ryan@shop.com',
-        'password' => 'password123'
-    ],
-    [
-        'username' => 'testuser',
-        'email' => 'test@shop.com',
-        'password' => 'test123'
-    ]
-];
+$users_file = 'data/users.json';
+if(file_exists($users_file)){
+    $users = json_decode(file_get_contents($users_file),true);
+} else {
+    $users = [
+        [
+            'username' => 'test',
+            'email' => 'test@shop.com',
+            'password' => 'test123'
+        ]
+    ];
+}
 
 // Process login form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
