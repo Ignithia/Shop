@@ -73,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         file_put_contents($users_file, $add_user_json);
         
         $username = $email = $phone = '';
+
+        $success_message = 'You have successfully registered! Please wait a while you get redirected to the login page in <span id="cd">3</span> seconds. Thank you!';
+        $should_redirect = true; 
     } else {
         $error_message = implode('<br>', $errors);
     }
@@ -96,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <?php if ($success_message): ?>
-                <div class="success"><?php echo htmlspecialchars($success_message); ?></div>
+                <div class="success"><?php echo $success_message; ?></div>
             <?php endif; ?>
             
             <form method="POST" action="">
@@ -144,4 +147,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </body>
+<script>
+    <?php if ($should_redirect): ?>
+        let countdown = 3;
+        const countdownElement = document.getElementById('cd');
+        const interval = setInterval(() => {
+            countdown--;
+            if (countdownElement) {
+                countdownElement.textContent = countdown;
+            }
+            if (countdown <= 0) {
+                clearInterval(interval);
+                window.location.href = 'login.php';
+            }
+        }, 1000);
+    <?php endif; ?>
+</script>
 </html>

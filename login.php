@@ -40,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($user_found) {
-        // Successful login
         $_SESSION['logged_in'] = true;
         $_SESSION['user_email'] = $user_found['email'];
         $_SESSION['username'] = $user_found['username'];

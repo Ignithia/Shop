@@ -10,8 +10,18 @@
         "password": "game2024"
     },
     {
+        "username": "Hannah",
+        "email": "hannah@shop.com",
+        "password": "password321"
+    },
+    {
         "username": "Bob",
         "email": "bob@store.com",
-        "password": "thisisatest"
+        "password": "bob123"
+    },
+    {
+        "username": "Nunzioke",
+        "email": "poldemol@gmail.com",
+        "password": "LOL123"
     }
 ]
