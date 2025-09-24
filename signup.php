@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Als de gebruiker al is ingelogd, redirect naar index.php
+// If user is already logged in, redirect to index.php
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header('Location: index.php');
     exit();
@@ -10,64 +10,46 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 $success_message = '';
 $error_message = '';
 
-// Verwerk registratieformulier
+// Process registration form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $voornaam = trim($_POST['voornaam'] ?? '');
-    $achternaam = trim($_POST['achternaam'] ?? '');
+    $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $confirm_password = trim($_POST['confirm_password'] ?? '');
-    $telefoon = trim($_POST['telefoon'] ?? '');
-    $adres = trim($_POST['adres'] ?? '');
-    $postcode = trim($_POST['postcode'] ?? '');
-    $stad = trim($_POST['stad'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
     
-    // Validatie
+    // Validation
     $errors = [];
     
-    if (empty($voornaam)) {
-        $errors[] = 'Voornaam is verplicht';
-    }
-    
-    if (empty($achternaam)) {
-        $errors[] = 'Achternaam is verplicht';
+    if (empty($username)) {
+        $errors[] = 'Username is required';
+    } elseif (strlen($username) < 3) {
+        $errors[] = 'Username must be at least 3 characters long';
     }
     
     if (empty($email)) {
-        $errors[] = 'Email is verplicht';
+        $errors[] = 'Email is required';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Ongeldig email adres';
+        $errors[] = 'Invalid email address';
     }
     
     if (empty($password)) {
-        $errors[] = 'Wachtwoord is verplicht';
+        $errors[] = 'Password is required';
     } elseif (strlen($password) < 6) {
-        $errors[] = 'Wachtwoord moet minimaal 6 karakters bevatten';
+        $errors[] = 'Password must be at least 6 characters long';
     }
     
     if ($password !== $confirm_password) {
-        $errors[] = 'Wachtwoorden komen niet overeen';
-    }
-    
-    if (empty($adres)) {
-        $errors[] = 'Adres is verplicht';
-    }
-    
-    if (empty($postcode)) {
-        $errors[] = 'Postcode is verplicht';
-    }
-    
-    if (empty($stad)) {
-        $errors[] = 'Stad is verplicht';
+        $errors[] = 'Passwords do not match';
     }
     
     if (empty($errors)) {
-        // Hier zou normaal de gebruiker in een database worden opgeslagen
-        // Voor deze demo simuleren we een succesvolle registratie
-        $success_message = 'Registratie succesvol! Je kunt nu inloggen met je gegevens.';
+        // Normally the user would be saved to a database here
+        // For this demo we simulate a successful registration through a success message
+        $success_message = 'Registration successful! You can now login with your credentials.';
         
-        // Reset formulier velden na succesvolle registratie
-        $voornaam = $achternaam = $email = $telefoon = $adres = $postcode = $stad = '';
+        // Reset form fields after successful registration
+        $username = $email = $phone = '';
     } else {
         $error_message = implode('<br>', $errors);
     }
@@ -95,20 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <form method="POST" action="">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="voornaam">First Name <span class="required">*</span>:</label>
-                        <input type="text" id="voornaam" name="voornaam" required 
-                               placeholder="Enter your first name..."
-                               value="<?php echo isset($voornaam) ? htmlspecialchars($voornaam) : ''; ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="achternaam">Last Name <span class="required">*</span>:</label>
-                        <input type="text" id="achternaam" name="achternaam" required 
-                               placeholder="Enter your last name..."
-                               value="<?php echo isset($achternaam) ? htmlspecialchars($achternaam) : ''; ?>">
-                    </div>
+                <div class="form-group">
+                    <label for="username">Username <span class="required">*</span>:</label>
+                    <input type="text" id="username" name="username" required 
+                           placeholder="Choose your gamer username..."
+                           value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>">
                 </div>
                 
                 <div class="form-group">
@@ -133,33 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="form-group">
-                    <label for="telefoon">Phone Number:</label>
-                    <input type="tel" id="telefoon" name="telefoon" 
+                    <label for="phone">Phone Number:</label>
+                    <input type="tel" id="phone" name="phone" 
                            placeholder="Optional phone number..."
-                           value="<?php echo isset($telefoon) ? htmlspecialchars($telefoon) : ''; ?>">
-                </div>
-                
-                <div class="form-group">
-                    <label for="adres">Address <span class="required">*</span>:</label>
-                    <input type="text" id="adres" name="adres" required 
-                           placeholder="Street address for game deliveries..."
-                           value="<?php echo isset($adres) ? htmlspecialchars($adres) : ''; ?>">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="postcode">Postal Code <span class="required">*</span>:</label>
-                        <input type="text" id="postcode" name="postcode" required 
-                               placeholder="Postal code..."
-                               value="<?php echo isset($postcode) ? htmlspecialchars($postcode) : ''; ?>">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stad">City <span class="required">*</span>:</label>
-                        <input type="text" id="stad" name="stad" required 
-                               placeholder="Your city..."
-                               value="<?php echo isset($stad) ? htmlspecialchars($stad) : ''; ?>">
-                    </div>
+                           value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Create Gaming Account</button>

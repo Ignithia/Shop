@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Als de gebruiker al is ingelogd, redirect naar index.php
+// If user is already logged in, redirect to index.php
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header('Location: index.php');
     exit();
@@ -9,22 +9,57 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 
 $error_message = '';
 
-// Verwerk loginformulier
+// Mock user database (in a real app, this would be in a database)
+$users = [
+    [
+        'username' => 'ryan',
+        'email' => 'ryan@shop.com',
+        'password' => 'password123'
+    ],
+    [
+        'username' => 'testuser',
+        'email' => 'test@shop.com',
+        'password' => 'test123'
+    ]
+];
+
+// Process login form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
+    $login_input = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $remember_me = isset($_POST['remember_me']);
     
-    // Controleer inloggegevens
-    if ($email === 'jenaam@shop.com' && $password === '12345isnotsecure') {
-        // Succesvolle login
+    $user_found = null;
+    
+    // Check login credentials
+    foreach ($users as $user) {
+        if (($user['email'] === $login_input || $user['username'] === $login_input) && $user['password'] === $password) {
+            $user_found = $user;
+            break;
+        }
+    }
+    
+    if ($user_found) {
+        // Successful login
         $_SESSION['logged_in'] = true;
-        $_SESSION['user_email'] = $email;
+        $_SESSION['user_email'] = $user_found['email'];
+        $_SESSION['username'] = $user_found['username'];
+        
+        // Handle Remember Me functionality
+        if ($remember_me) {
+            // Set cookie for 30 days 
+            setcookie('remember_login', $login_input, time() + (30 * 24 * 60 * 60), '/');
+        }
+        
         header('Location: index.php');
         exit();
     } else {
-        $error_message = 'Onjuiste email of wachtwoord. Probeer opnieuw.';
+        $error_message = 'Incorrect email/username or password. Please try again.';
     }
 }
+
+// Check for previous login
+$remembered_email = $_COOKIE['remember_login'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -45,16 +80,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <form method="POST" action="">
                 <div class="form-group">
-                    <label for="email">Gamer Email:</label>
-                    <input type="email" id="email" name="email" required 
-                           placeholder="Enter your gamer email..."
-                           value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                    <label for="email">Email or Username:</label>
+                    <input type="text" id="email" name="email" required 
+                           placeholder="Enter your email or username..."
+                           value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecialchars($remembered_email); ?>">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password:</label>
                     <input type="password" id="password" name="password" required
                            placeholder="Enter your password...">
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember_me" name="remember_me">
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Login & Start Gaming</button>
@@ -66,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="demo-credentials">
                 <strong>Demo Login:</strong><br>
-                Email: jenaam@shop.com<br>
-                Password: 12345isnotsecure
+                Email: test@shop.com OR Username: test<br>
+                Password: test123
             </div>
         </div>
     </div>

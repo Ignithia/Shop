@@ -255,6 +255,33 @@ input::placeholder {
   color: var(--text-muted);
 }
 
+/* Checkbox */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  accent-color: var(--accent-blue);
+}
+
 /* Buttons */
 .btn {
   padding: 12px 24px;
@@ -508,13 +535,13 @@ input::placeholder {
   }
 }
 
-/* Gaming-specific enhancements */
+/* Header effect */
 .header h1::after {
   content: " 🎮";
   filter: hue-rotate(180deg);
 }
 
-/* Subtle background pattern */
+/* Bg pattern */
 body::before {
   content: "";
   position: fixed;
@@ -530,4 +557,180 @@ body::before {
   background-size: 20px 20px;
   pointer-events: none;
   z-index: -1;
+}
+
+/* Shop */
+.shop-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.shop-header h2 {
+  font-family: var(--font-gaming);
+  font-size: 2.5rem;
+  background: var(--btn-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.shop-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Category */
+.category-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.category-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 25px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.category-btn:hover {
+  background: var(--btn-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-blue);
+}
+
+.category-btn.active {
+  background: var(--btn-primary);
+  border-color: var(--accent-blue);
+  box-shadow: var(--glow-blue);
+}
+
+/* Games */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.game-card {
+  background: var(--bg-card);
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.game-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(102, 192, 244, 0.2);
+}
+
+.game-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.game-info {
+  padding: 1.5rem;
+}
+
+.game-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  font-family: var(--font-gaming);
+}
+
+.game-category {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.game-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-green);
+  margin-bottom: 1rem;
+}
+
+.buy-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--btn-success);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.buy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glow-green);
+}
+
+/* Navigation-btn */
+.nav-btn {
+  padding: 0.5rem 1rem;
+  background: var(--btn-secondary);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 6px;
+  margin-right: 1rem;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.nav-btn:hover {
+  background: var(--btn-primary);
+  transform: translateY(-1px);
+}
+
+/* Error no games */
+.no-games {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.no-games h3 {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .category-nav {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .shop-header h2 {
+    font-size: 2rem;
+  }
 }

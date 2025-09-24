@@ -1,21 +1,20 @@
 <?php
 session_start();
 
-// Controleer of de gebruiker is ingelogd
+// Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    // Gebruiker is niet ingelogd, redirect naar login.php
     header('Location: login.php');
     exit();
 }
 
-// Logout functionaliteit
+// Logout
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
     session_destroy();
     header('Location: login.php');
     exit();
 }
 
-$user_email = $_SESSION['user_email'] ?? 'Onbekend';
+$username = $_SESSION['username'] ?? 'Unknown';
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -29,7 +28,7 @@ $user_email = $_SESSION['user_email'] ?? 'Onbekend';
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>Player: <?php echo htmlspecialchars($user_email); ?></span>
+            <span>Player: <?php echo htmlspecialchars($username); ?></span>
             <a href="?logout=1" class="logout-btn">Logout</a>
         </div>
     </header>
@@ -58,14 +57,14 @@ $user_email = $_SESSION['user_email'] ?? 'Onbekend';
         <div class="dashboard-grid">
             <div class="dashboard-card">
                 <h3>🛒 Shop</h3>
-                <p>Browse and purchase games, consoles, and gaming accessories.</p>
-                <a href="#" class="card-btn">Browse Shop</a>
+                <p>Browse and purchase games.</p>
+                <a href="shop.php" class="card-btn">Browse Shop</a>
             </div>
 
             <div class="dashboard-card">
                 <h3>🕹️ Game Library</h3>
-                <p>Add new games, manage inventory, and update product information.</p>
-                <a href="#" class="card-btn">Manage Games</a>
+                <p>Manage your game collection and keep track of your favorites.</p>
+                <a href="#" class="card-btn">Manage Librarys</a>
             </div>
 
             <div class="dashboard-card">
