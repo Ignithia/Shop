@@ -212,5 +212,31 @@
         "description": "Collection of legendary aircraft including the P-51D Mustang and Spitfire."
       }
     ]
+  },
+  {
+    "id": 11,
+    "name": "Baldur's Gate III",
+    "category": "strategy",
+    "price": 59.99,
+    "original_price": 59.99,
+    "image": "./media/bg3.jpg",
+    "description": "Baldur's Gate 3 is a story-rich, party-based RPG set in the universe of Dungeons & Dragons, where your choices shape a tale of fellowship and betrayal, survival and sacrifice, and the lure of absolute power.",
+    "is_new": false,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "bg3_dlc1",
+        "name": "Baldur's Gate III: Digital Deluxe Edition",
+        "price": 9.75,
+        "description": "For those looking to get a little more out of Baldur’s Gate 3, the Digital Deluxe Edition upgrade content includes in-game cosmetics, such as a unique custom dice skin to show off to your friends, as well as practical in-game items such as the Mask of the Shapeshifter from Divinity: Original Sin 2. Listen to the magical music of Borislav Slavov’s Original Soundtrack for Baldur’s Gate 3 or even pick up a pen and play D&D as one of our Origin characters with the handy printable pre-made character sheets. There’s plenty to get stuck into, in and outside of the game."
+      },
+      {
+        "id": "bg3_dlc2",
+        "name": "Baldur's Gate III: Toolkit Data",
+        "price": 0.0,
+        "description": "Unlock the official Baldur's Gate 3 Toolkit and reshape the world of Faerûn. This powerful modding engine lets you: \n- Create and publish your own mods to share with the community.\n- Develop new character classes and subclasses.\n- Design custom spells and magical abilities.\n- Personalize dice skins for unique gameplay flair.\n- Add original weapons and armor to expand your arsenal.\n- Make scripting changes using Osiris, the game's scripting language, to define custom behaviors and events.\nAnd much more—bring your creative vision to life in Baldur's Gate 3!"
+      }
+    ]
   }
 ]

@@ -1,0 +1,21 @@
+To add a game here's a template of a game:
+{
+    "id": 0,
+    "name": "",
+    "category": "",
+    "price": 0.0,
+    "original_price": 0.0,
+    "image": "",
+    "description": "",
+    "is_new": false,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "",
+        "name": "",
+        "price": 0.0,
+        "description": ""
+      }
+    ]
+  }

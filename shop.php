@@ -28,14 +28,25 @@ function loadGames() {
 
 $games = loadGames();
 
-// Get category using URL parameters
+// Get category and search using URL parameters
 $selected_category = $_GET['category'] ?? 'all';
+$search_query = $_GET['search'] ?? '';
 
 // Filter games by category (only if a specific category is selected else show all)
 $filtered_games = $games;
 if ($selected_category !== 'all') {
     $filtered_games = array_filter($games, function($game) use ($selected_category) {
         return $game['category'] === $selected_category;
+    });
+}
+
+if (!empty($search_query)) {
+    $filtered_games = array_filter($filtered_games, function($game) use ($search_query) {
+        $query_lower = strtolower($search_query);
+        $name_match = strpos(strtolower($game['name']), $query_lower) !== false;
+        $description_match = strpos(strtolower($game['description']), $query_lower) !== false;
+        $category_match = strpos(strtolower($game['category']), $query_lower) !== false;
+        return $name_match || $description_match || $category_match;
     });
 }
 
@@ -72,6 +83,28 @@ $categories = [
         <div class="shop-header">
             <h2>🛒 Game Shop</h2>
             <p>Discover amazing games and improve your collection!</p>
+        </div>
+
+        <div class="search-section">
+            <form method="GET" action="shop.php" class="search-form">
+                <div class="search-container">
+                    <input type="text" 
+                           name="search" 
+                           placeholder="Search games..." 
+                           value="<?php echo htmlspecialchars($search_query); ?>"
+                           class="search-input">
+                    <?php if ($selected_category !== 'all'): ?>
+                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($selected_category); ?>">
+                    <?php endif; ?>
+                    <button type="submit" class="search-btn">🔍</button>
+                </div>
+                <?php if (!empty($search_query)): ?>
+                    <div class="search-results-info">
+                        <span>Showing results for: <strong>"<?php echo htmlspecialchars($search_query); ?>"</strong></span>
+                        <a href="?<?php echo ($selected_category !== 'all') ? 'category=' . $selected_category : ''; ?>" class="clear-search">Clear Search</a>
+                    </div>
+                <?php endif; ?>
+            </form>
         </div>
 
         <div class="category-nav">
@@ -135,8 +168,13 @@ $categories = [
             <!-- If no games are found show this message -->
         <?php if (empty($filtered_games)): ?>
             <div class="no-games">
-                <h3>No games found in this category</h3>
-                <p>Try selecting a different category or browse all games.</p>
+                <?php if (!empty($search_query)): ?>
+                    <h3>🔍 No games found for "<?php echo htmlspecialchars($search_query); ?>"</h3>
+                    <p>Try adjusting your search terms or <a href="?<?php echo ($selected_category !== 'all') ? 'category=' . $selected_category : ''; ?>">browse all games</a>.</p>
+                <?php else: ?>
+                    <h3>No games found in this category</h3>
+                    <p>Try selecting a different category or browse all games.</p>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>

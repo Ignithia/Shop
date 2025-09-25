@@ -145,9 +145,6 @@ $user_owns_game = userOwnsGame($username, $game_id);
                     <div class="detail-item">
                         <strong>Price:</strong> $<?php echo number_format($game['price'], 2); ?>
                     </div>
-                    <div class="detail-item">
-                        <strong>Game ID:</strong> #<?php echo $game['id']; ?>
-                    </div>
                     <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
                     <div class="detail-item">
                         <strong>Sale:</strong> <?php echo $game['sale_percentage']; ?>% OFF
