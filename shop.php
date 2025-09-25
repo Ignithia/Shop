@@ -16,79 +16,17 @@ if (isset($_GET['logout']) && $_GET['logout'] === '1') {
 
 $username = $_SESSION['username'] ?? 'Unknown';
 
-// Games database
-$games = [
-    [
-        'id' => 1,
-        'name' => 'Civilization VI',
-        'category' => 'strategy',
-        'price' => 59.99,
-        'image' => 'media/civ6.jpg'
-    ],
-    [
-        'id' => 2,
-        'name' => 'Starcraft II',
-        'category' => 'strategy',
-        'price' => 39.99,
-        'image' => 'media/starcraft2.jpeg'
-    ],
-    [
-        'id' => 3,
-        'name' => 'Total War: Warhammer III',
-        'category' => 'strategy',
-        'price' => 69.99,
-        'image' => 'media/totalwar.jpg'
-    ],
-    [
-        'id' => 4,
-        'name' => 'Sekiro: Shadows Die Twice',
-        'category' => 'action',
-        'price' => 49.99,
-        'image' => 'media/sekiro.jpg'
-    ],
-    [
-        'id' => 5,
-        'name' => 'Devil May Cry 5',
-        'category' => 'action',
-        'price' => 44.99,
-        'image' => 'media/devilmaycry.jpeg'
-    ],
-    [
-        'id' => 6,
-        'name' => 'DOOM Eternal',
-        'category' => 'action',
-        'price' => 54.99,
-        'image' => 'media/doom.jpg'
-    ],
-    [
-        'id' => 7,
-        'name' => 'Minecraft',
-        'category' => 'sandbox',
-        'price' => 29.99,
-        'image' => 'media/minecraft.jpg'
-    ],
-    [
-        'id' => 8,
-        'name' => 'Terraria',
-        'category' => 'sandbox',
-        'price' => 19.99,
-        'image' => 'media/terraria.jpg'
-    ],
-    [
-        'id' => 9,
-        'name' => 'The Sims 4',
-        'category' => 'simulation',
-        'price' => 39.99,
-        'image' => 'media/sims4.jpg'
-    ],
-    [
-        'id' => 10,
-        'name' => 'Microsoft Flight Simulator',
-        'category' => 'simulation',
-        'price' => 79.99,
-        'image' => 'media/microsoftflight.jpg'
-    ]
-];
+// Load games from JSON file
+function loadGames() {
+    if (file_exists('data/games.json')) {
+        $games_data = file_get_contents('data/games.json');
+        $games = json_decode($games_data, true);
+        return is_array($games) ? $games : [];
+    }
+    return [];
+}
+
+$games = loadGames();
 
 // Get category using URL parameters
 $selected_category = $_GET['category'] ?? 'all';

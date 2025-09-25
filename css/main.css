@@ -167,7 +167,6 @@ body {
     var(--accent-purple),
     var(--accent-green)
   );
-  animation: shimmer 3s infinite;
 }
 
 .welcome-card,
@@ -442,13 +441,13 @@ input::placeholder {
   text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
-/* Required field styling */
+/* Required field */
 .required {
   color: var(--accent-orange);
   font-weight: bold;
 }
 
-/* Demo credentials box */
+/* credentials box */
 .demo-credentials {
   margin-top: 30px;
   padding: 20px;
@@ -471,15 +470,6 @@ input::placeholder {
   }
   50% {
     opacity: 1;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
   }
 }
 

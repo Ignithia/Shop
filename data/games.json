@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Civilization VI",
+    "category": "strategy",
+    "price": 59.99,
+    "image": "./media/civ6.jpg",
+    "description": "Build and lead a civilization from the Stone Age to the Information Age."
+  },
+  {
+    "id": 2,
+    "name": "Starcraft II",
+    "category": "strategy",
+    "price": 39.99,
+    "image": "./media/starcraft2.jpeg",
+    "description": "Epic real-time strategy game set in a sci-fi universe."
+  },
+  {
+    "id": 3,
+    "name": "Total War: Warhammer III",
+    "category": "strategy",
+    "price": 69.99,
+    "image": "./media/totalwar.jpg",
+    "description": "The culmination of the Total War: Warhammer trilogy."
+  },
+  {
+    "id": 4,
+    "name": "Sekiro: Shadows Die Twice",
+    "category": "action",
+    "price": 49.99,
+    "image": "./media/sekiro.jpg",
+    "description": "Intense action-adventure game with challenging combat."
+  },
+  {
+    "id": 5,
+    "name": "Devil May Cry 5",
+    "category": "action",
+    "price": 44.99,
+    "image": "./media/devilmaycry.jpeg",
+    "description": "Stylish action game with demon hunting and combo system."
+  },
+  {
+    "id": 6,
+    "name": "DOOM Eternal",
+    "category": "action",
+    "price": 54.99,
+    "image": "./media/doom.jpg",
+    "description": "Fast-paced first-person shooter with intense demon slaying."
+  },
+  {
+    "id": 7,
+    "name": "Minecraft",
+    "category": "sandbox",
+    "price": 29.99,
+    "image": "./media/minecraft.jpg",
+    "description": "Creative sandbox game where you can build anything you imagine."
+  },
+  {
+    "id": 8,
+    "name": "Terraria",
+    "category": "sandbox",
+    "price": 19.99,
+    "image": "./media/terraria.jpg",
+    "description": "2D adventure sandbox game with crafting and exploration."
+  },
+  {
+    "id": 9,
+    "name": "The Sims 4",
+    "category": "simulation",
+    "price": 39.99,
+    "image": "./media/sims4.jpg",
+    "description": "Life simulation game where you create and control virtual people."
+  },
+  {
+    "id": 10,
+    "name": "Microsoft Flight Simulator",
+    "category": "simulation",
+    "price": 79.99,
+    "image": "./media/microsoftflight.jpg",
+    "description": "Ultra-realistic flight simulation with stunning visuals."
+  }
+]
