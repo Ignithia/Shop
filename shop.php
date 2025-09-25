@@ -59,8 +59,11 @@ $categories = [
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>Player: <?php echo htmlspecialchars($username); ?></span>
+            <span>User: <?php echo htmlspecialchars($username); ?></span>
             <a href="index.php" class="nav-btn">Dashboard</a>
+            <span class="nav-btn active">Shop</span>
+            <a href="library.php" class="nav-btn">Library</a>
+            <a href="cart.php" class="nav-btn">Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
             <a href="?logout=1" class="logout-btn">Logout</a>
         </div>
     </header>
@@ -68,7 +71,7 @@ $categories = [
     <div class="container">
         <div class="shop-header">
             <h2>🛒 Game Shop</h2>
-            <p>Discover amazing games and level up your collection!</p>
+            <p>Discover amazing games and improve your collection!</p>
         </div>
 
         <div class="category-nav">
@@ -83,12 +86,47 @@ $categories = [
         <div class="games-grid">
             <?php foreach ($filtered_games as $game): ?>
                 <div class="game-card">
-                    <img src="<?php echo $game['image']; ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                    <div class="game-image-container">
+                        <a href="product.php?id=<?php echo $game['id']; ?>">
+                            <img src="<?php echo $game['image']; ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                        </a>
+                        <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
+                            <div class="sale-badge">-<?php echo $game['sale_percentage']; ?>%</div>
+                        <?php endif; ?>
+                        <?php if (isset($game['dlcs']) && !empty($game['dlcs'])): ?>
+                            <div class="dlc-indicator">DLC Available</div>
+                        <?php endif; ?>
+                    </div>
                     <div class="game-info">
-                        <h3 class="game-title"><?php echo htmlspecialchars($game['name']); ?></h3>
+                        <h3 class="game-title">
+                            <a href="product.php?id=<?php echo $game['id']; ?>">
+                                <?php echo htmlspecialchars($game['name']); ?>
+                            </a>
+                        </h3>
                         <p class="game-category"><?php echo ucfirst($game['category']); ?></p>
-                        <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
-                        <button class="buy-btn">Add to Cart</button>
+                        
+                        <?php if (isset($game['is_new']) && $game['is_new']): ?>
+                            <div class="new-badge-small">NEW</div>
+                        <?php endif; ?>
+                        
+                        <!-- Price -->
+                        <div class="game-pricing">
+                            <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
+                                <span class="original-price">$<?php echo number_format($game['original_price'], 2); ?></span>
+                                <span class="sale-price">$<?php echo number_format($game['price'], 2); ?></span>
+                            <?php else: ?>
+                                <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="game-actions">
+                            <form method="post" action="cart.php" style="display: inline;">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                <button type="submit" class="buy-btn">Add to Cart</button>
+                            </form>
+                            <a href="product.php?id=<?php echo $game['id']; ?>" class="card-btn secondary">View Details</a>
+                        </div>
                     </div>
                 </div>
             <?php endforeach; ?>

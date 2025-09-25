@@ -4,79 +4,213 @@
     "name": "Civilization VI",
     "category": "strategy",
     "price": 59.99,
+    "original_price": 59.99,
     "image": "./media/civ6.jpg",
-    "description": "Build and lead a civilization from the Stone Age to the Information Age."
+    "description": "Build and lead a civilization from the Stone Age to the Information Age.",
+    "is_new": false,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "civ6_dlc1",
+        "name": "Rise and Fall Expansion",
+        "price": 29.99,
+        "description": "Adds new civilizations, leaders, and game mechanics including Golden Ages and Dark Ages."
+      },
+      {
+        "id": "civ6_dlc2",
+        "name": "Gathering Storm Expansion",
+        "price": 39.99,
+        "description": "Natural disasters, climate change, and new civilizations reshape your empire."
+      }
+    ]
   },
   {
     "id": 2,
     "name": "Starcraft II",
     "category": "strategy",
-    "price": 39.99,
+    "price": 19.99,
+    "original_price": 39.99,
     "image": "./media/starcraft2.jpeg",
-    "description": "Epic real-time strategy game set in a sci-fi universe."
+    "description": "Epic real-time strategy game set in a sci-fi universe.",
+    "is_new": false,
+    "is_on_sale": true,
+    "sale_percentage": 50,
+    "dlcs": []
   },
   {
     "id": 3,
     "name": "Total War: Warhammer III",
     "category": "strategy",
     "price": 69.99,
+    "original_price": 69.99,
     "image": "./media/totalwar.jpg",
-    "description": "The culmination of the Total War: Warhammer trilogy."
+    "description": "The culmination of the Total War: Warhammer trilogy.",
+    "is_new": true,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "tw_wh3_dlc1",
+        "name": "Champions of Chaos",
+        "price": 24.99,
+        "description": "Four new Legendary Lords for the Warriors of Chaos."
+      }
+    ]
   },
   {
     "id": 4,
     "name": "Sekiro: Shadows Die Twice",
     "category": "action",
-    "price": 49.99,
+    "price": 34.99,
+    "original_price": 49.99,
     "image": "./media/sekiro.jpg",
-    "description": "Intense action-adventure game with challenging combat."
+    "description": "Intense action-adventure game with challenging combat.",
+    "is_new": false,
+    "is_on_sale": true,
+    "sale_percentage": 30,
+    "dlcs": []
   },
   {
     "id": 5,
     "name": "Devil May Cry 5",
     "category": "action",
     "price": 44.99,
+    "original_price": 44.99,
     "image": "./media/devilmaycry.jpeg",
-    "description": "Stylish action game with demon hunting and combo system."
+    "description": "Stylish action game with demon hunting and combo system.",
+    "is_new": false,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "dmc5_dlc1",
+        "name": "Vergil DLC",
+        "price": 4.99,
+        "description": "Play as Vergil with unique gameplay mechanics and story missions."
+      }
+    ]
   },
   {
     "id": 6,
     "name": "DOOM Eternal",
     "category": "action",
     "price": 54.99,
+    "original_price": 54.99,
     "image": "./media/doom.jpg",
-    "description": "Fast-paced first-person shooter with intense demon slaying."
+    "description": "Fast-paced first-person shooter with intense demon slaying.",
+    "is_new": true,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "doom_dlc1",
+        "name": "The Ancient Gods - Part One",
+        "price": 19.99,
+        "description": "Continue the DOOM Slayer's saga with new demons and challenging combat."
+      },
+      {
+        "id": "doom_dlc2",
+        "name": "The Ancient Gods - Part Two",
+        "price": 19.99,
+        "description": "The epic conclusion to the DOOM Slayer's story."
+      }
+    ]
   },
   {
     "id": 7,
     "name": "Minecraft",
     "category": "sandbox",
     "price": 29.99,
+    "original_price": 29.99,
     "image": "./media/minecraft.jpg",
-    "description": "Creative sandbox game where you can build anything you imagine."
+    "description": "Creative sandbox game where you can build anything you imagine.",
+    "is_new": false,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": []
   },
   {
     "id": 8,
     "name": "Terraria",
     "category": "sandbox",
-    "price": 19.99,
+    "price": 9.99,
+    "original_price": 19.99,
     "image": "./media/terraria.jpg",
-    "description": "2D adventure sandbox game with crafting and exploration."
+    "description": "2D adventure sandbox game with crafting and exploration.",
+    "is_new": false,
+    "is_on_sale": true,
+    "sale_percentage": 50,
+    "dlcs": []
   },
   {
     "id": 9,
     "name": "The Sims 4",
     "category": "simulation",
     "price": 39.99,
+    "original_price": 39.99,
     "image": "./media/sims4.jpg",
-    "description": "Life simulation game where you create and control virtual people."
+    "description": "Life simulation game where you create and control virtual people.",
+    "is_new": false,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "sims4_dlc1",
+        "name": "City Living Expansion",
+        "price": 39.99,
+        "description": "Move to the big city and experience apartment living with festivals and careers."
+      },
+      {
+        "id": "sims4_dlc2",
+        "name": "Seasons Expansion",
+        "price": 39.99,
+        "description": "Experience weather, holidays, and seasonal activities throughout the year."
+      },
+      {
+        "id": "sims4_dlc3",
+        "name": "Cats & Dogs Expansion",
+        "price": 39.99,
+        "description": "Create and care for cats and dogs, and become a veterinarian."
+      }
+    ]
   },
   {
     "id": 10,
     "name": "Microsoft Flight Simulator",
     "category": "simulation",
     "price": 79.99,
+    "original_price": 79.99,
     "image": "./media/microsoftflight.jpg",
-    "description": "Ultra-realistic flight simulation with stunning visuals."
+    "description": "Ultra-realistic flight simulation with stunning visuals.",
+    "is_new": true,
+    "is_on_sale": false,
+    "sale_percentage": 0,
+    "dlcs": [
+      {
+        "id": "msfs_dlc1",
+        "name": "Top Gun: Maverick Expansion",
+        "price": 19.99,
+        "description": "Fly iconic aircraft from the Top Gun: Maverick movie with training missions."
+      },
+      {
+        "id": "msfs_dlc2",
+        "name": "World Update I: Japan",
+        "price": 0.0,
+        "description": "Enhanced airports, improved digital elevation model, and photogrammetry cities in Japan."
+      },
+      {
+        "id": "msfs_dlc3",
+        "name": "Premium Deluxe Aircraft Pack",
+        "price": 29.99,
+        "description": "Five additional highly detailed aircraft including the Boeing 787-10 Dreamliner."
+      },
+      {
+        "id": "msfs_dlc4",
+        "name": "Famous Flyers Aircraft Pack",
+        "price": 24.99,
+        "description": "Collection of legendary aircraft including the P-51D Mustang and Spitfire."
+      }
+    ]
   }
 ]

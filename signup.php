@@ -86,13 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join the Gaming Community - Gaming Store</title>
+    <title>Register - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
     <div class="signup-container">
         <div>
-            <h1>Join the Gaming Community</h1>
+            <h1>Join the community</h1>
             
             <?php if ($error_message): ?>
                 <div class="error"><?php echo $error_message; ?></div>
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">Gamer Email <span class="required">*</span>:</label>
+                    <label for="email">Email <span class="required">*</span>:</label>
                     <input type="email" id="email" name="email" required 
                            placeholder="your.gamertag@email.com"
                            value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>">
@@ -138,11 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Create Gaming Account</button>
+                <button type="submit" class="btn btn-primary">Create Account</button>
             </form>
             
             <div class="login-link">
-                <p>Already a player? <a href="login.php">Login here</a></p>
+                <p>Already a member? <a href="login.php">Login here</a></p>
             </div>
         </div>
     </div>

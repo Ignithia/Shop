@@ -65,7 +65,7 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Login - Gaming Store</title>
+    <title>Login - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -99,11 +99,11 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
                     </label>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Login & Start Gaming</button>
+                <button type="submit" class="btn btn-primary">Login</button>
             </form>
             
             <div class="signup-link">
-                <p>New Player? <a href="signup.php">Create Account</a></p>
+                <p>New User? <a href="signup.php">Create Account</a></p>
             </div>
             
             <div class="demo-credentials">

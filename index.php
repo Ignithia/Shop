@@ -60,22 +60,26 @@ $data_counts = getDataCounts($username);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gaming Store Dashboard - Level Up Your Shop</title>
+    <title>Dashboard - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>Player: <?php echo htmlspecialchars($username); ?></span>
+            <span>User: <?php echo htmlspecialchars($username); ?></span>
+            <span class="nav-btn active">Dashboard</span>
+            <a href="shop.php" class="nav-btn">Shop</a>
+            <a href="library.php" class="nav-btn">Library</a>
+            <a href="cart.php" class="nav-btn">Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
             <a href="?logout=1" class="logout-btn">Logout</a>
         </div>
     </header>
 
     <div class="container">
         <div class="welcome-card">
-            <h2>Welcome to your Gaming Store Command Center!</h2>
-            <p>You've successfully logged in. Manage your gaming empire and level up your business from this dashboard.</p>
+            <h2>Welcome to your dashboard!</h2>
+            <p>Here you can go to the shop, library, and account settings.</p>
             
             <div class="stats">
                 <div class="stat-item">
@@ -88,7 +92,7 @@ $data_counts = getDataCounts($username);
                 </div>
                 <div class="stat-item">
                     <div class="stat-number"><?php echo $data_counts['users']; ?></div>
-                    <div class="stat-label">Active Gamers</div>
+                    <div class="stat-label">Existing Users</div>
                 </div>
             </div>
         </div>
@@ -103,7 +107,7 @@ $data_counts = getDataCounts($username);
             <div class="dashboard-card">
                 <h3>🕹️ Game Library</h3>
                 <p>Manage your game collection and keep track of your favorites.</p>
-                <a href="#" class="card-btn">Manage Librarys</a>
+                <a href="library.php" class="card-btn">View My Library</a>
             </div>
 
             <div class="dashboard-card">
