@@ -747,6 +747,28 @@ body::before {
   color: var(--text-primary);
 }
 
+.no-games a {
+  color: var(--accent-blue);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: inline-block;
+  margin: 0 0.2rem;
+}
+
+.no-games a:hover {
+  color: white;
+  background: var(--accent-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 192, 244, 0.3);
+}
+
+.no-games a:active {
+  transform: translateY(0);
+}
+
 /* Products */
 .product-page {
   max-width: 1000px;
