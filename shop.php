@@ -50,13 +50,23 @@ if (!empty($search_query)) {
     });
 }
 
-$categories = [
-    'all' => 'All Games',
-    'action' => 'Action',
-    'strategy' => 'Strategy', 
-    'sandbox' => 'Sandbox',
-    'simulation' => 'Simulation'
-];
+// Load categories from JSON file
+function loadCategories() {
+    if (file_exists('data/categories.json')) {
+        $categories_data = file_get_contents('data/categories.json');
+        $categories_array = json_decode($categories_data, true);
+        if (is_array($categories_array)) {
+            $categories = ['all' => 'All Games'];
+            foreach ($categories_array as $category) {
+                $key = strtolower($category['name']);
+                $categories[$key] = $category['name'];
+            }
+            return $categories;
+        }
+    }
+}
+
+$categories = loadCategories();
 ?>
 <!DOCTYPE html>
 <html lang="nl">

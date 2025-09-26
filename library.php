@@ -26,7 +26,6 @@ function loadGames() {
     return [];
 }
 
-// Get user's owned games
 function getUserOwnedGames($username) {
     if (file_exists('data/users.json')) {
         $users_data = json_decode(file_get_contents('data/users.json'), true);
@@ -41,7 +40,6 @@ function getUserOwnedGames($username) {
     return [];
 }
 
-// Find game by ID
 function findGameById($games, $id) {
     foreach ($games as $game) {
         if ($game['id'] == $id) {
@@ -55,7 +53,6 @@ $games = loadGames();
 $owned_game_ids = getUserOwnedGames($username);
 $owned_games = [];
 
-// Get full game details for owned games
 foreach ($owned_game_ids as $game_id) {
     $game = findGameById($games, $game_id);
     if ($game) {
@@ -63,11 +60,48 @@ foreach ($owned_game_ids as $game_id) {
     }
 }
 
-// Group games by category for better organization
+$selected_category = $_GET['category'] ?? 'all';
+$search_query = $_GET['search'] ?? '';
+
+$filtered_owned_games = $owned_games;
+if ($selected_category !== 'all') {
+    $filtered_owned_games = array_filter($owned_games, function($game) use ($selected_category) {
+        return $game['category'] === $selected_category;
+    });
+}
+
+if (!empty($search_query)) {
+    $filtered_owned_games = array_filter($filtered_owned_games, function($game) use ($search_query) {
+        $query_lower = strtolower($search_query);
+        $name_match = strpos(strtolower($game['name']), $query_lower) !== false;
+        $description_match = strpos(strtolower($game['description']), $query_lower) !== false;
+        $category_match = strpos(strtolower($game['category']), $query_lower) !== false;
+        return $name_match || $description_match || $category_match;
+    });
+}
+
 $games_by_category = [];
-foreach ($owned_games as $game) {
+foreach ($filtered_owned_games as $game) {
     $games_by_category[$game['category']][] = $game;
 }
+
+// Load categories from JSON file
+function loadCategories() {
+    if (file_exists('data/categories.json')) {
+        $categories_data = file_get_contents('data/categories.json');
+        $categories_array = json_decode($categories_data, true);
+        if (is_array($categories_array)) {
+            $categories = ['all' => 'All Games'];
+            foreach ($categories_array as $category) {
+                $key = strtolower($category['name']);
+                $categories[$key] = $category['name'];
+            }
+            return $categories;
+        }
+    }
+}
+
+$categories = loadCategories();
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -97,6 +131,39 @@ foreach ($owned_games as $game) {
                 <p>Your personal collection of <?php echo count($owned_games); ?> games</p>
             </div>
 
+            <?php if (!empty($owned_games)): ?>
+            <div class="search-section">
+                <form method="GET" action="library.php" class="search-form">
+                    <div class="search-container">
+                        <input type="text" 
+                               name="search" 
+                               placeholder="Search your library..." 
+                               value="<?php echo htmlspecialchars($search_query); ?>"
+                               class="search-input">
+                        <?php if ($selected_category !== 'all'): ?>
+                            <input type="hidden" name="category" value="<?php echo htmlspecialchars($selected_category); ?>">
+                        <?php endif; ?>
+                        <button type="submit" class="search-btn">🔍</button>
+                    </div>
+                    <?php if (!empty($search_query)): ?>
+                        <div class="search-results-info">
+                            <span>Showing results for: <strong>"<?php echo htmlspecialchars($search_query); ?>"</strong></span>
+                            <a href="?<?php echo ($selected_category !== 'all') ? 'category=' . $selected_category : ''; ?>" class="clear-search">Clear Search</a>
+                        </div>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <div class="category-nav">
+                <?php foreach ($categories as $cat_key => $cat_name): ?>
+                    <a href="?category=<?php echo $cat_key; ?><?php echo !empty($search_query) ? '&search=' . urlencode($search_query) : ''; ?>" 
+                       class="category-btn <?php echo ($selected_category === $cat_key) ? 'active' : ''; ?>">
+                        <?php echo $cat_name; ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
             <?php if (empty($owned_games)): ?>
                 <div class="empty-library">
                     <h3>Your library is empty</h3>
@@ -106,15 +173,21 @@ foreach ($owned_games as $game) {
             <?php else: ?>
                 <div class="library-stats">
                     <div class="stat-card">
-                        <div class="stat-number"><?php echo count($owned_games); ?></div>
-                        <div class="stat-label">Games Owned</div>
+                        <div class="stat-number"><?php echo count($filtered_owned_games); ?></div>
+                        <div class="stat-label">
+                            <?php if (!empty($search_query) || $selected_category !== 'all'): ?>
+                                Showing
+                            <?php else: ?>
+                                Games Owned
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number"><?php echo count($games_by_category); ?></div>
                         <div class="stat-label">Categories</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">$<?php echo number_format(array_sum(array_column($owned_games, 'price')), 2); ?></div>
+                        <div class="stat-number">$<?php echo number_format(array_sum(array_column($filtered_owned_games, 'price')), 2); ?></div>
                         <div class="stat-label">Total Value</div>
                     </div>
                 </div>
@@ -126,15 +199,17 @@ foreach ($owned_games as $game) {
                             <div class="games-grid">
                                 <?php foreach ($category_games as $game): ?>
                                     <div class="game-card library-card">
-                                        <img src="<?php echo htmlspecialchars($game['image']); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                                        <a href="product.php?id=<?php echo $game['id']; ?>">
+                                            <img src="<?php echo htmlspecialchars($game['image']); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                                        </a>
                                         <div class="game-info">
-                                            <h4 class="game-title"><?php echo htmlspecialchars($game['name']); ?></h4>
+                                            <h4 class="game-title">
+                                                <a href="product.php?id=<?php echo $game['id']; ?>">
+                                                    <?php echo htmlspecialchars($game['name']); ?>
+                                                </a>
+                                            </h4>
                                             <p class="game-category"><?php echo ucfirst(htmlspecialchars($game['category'])); ?></p>
                                             <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
-                                            <div class="game-actions">
-                                                <a href="product.php?id=<?php echo $game['id']; ?>" class="card-btn">View Details</a>
-                                                <button class="card-btn secondary" onclick="alert('Play feature coming soon!')">Play Game</button>
-                                            </div>
                                         </div>
                                         <div class="owned-badge">✓ OWNED</div>
                                     </div>
@@ -144,14 +219,18 @@ foreach ($owned_games as $game) {
                     <?php endforeach; ?>
                 <?php endif; ?>
 
-                <div class="library-actions">
-                    <h3>Discover More Games</h3>
-                    <p>Expand your library with more amazing games!</p>
-                    <a href="shop.php" class="btn btn-primary">Browse All Games</a>
-                    <a href="shop.php?category=<?php echo array_keys($games_by_category)[0] ?? 'all'; ?>" class="btn card-btn">
-                        More <?php echo ucfirst(array_keys($games_by_category)[0] ?? 'Games'); ?>
-                    </a>
-                </div>
+                <!-- If no games found in filtered results -->
+                <?php if (empty($games_by_category) && !empty($owned_games)): ?>
+                    <div class="no-games">
+                        <?php if (!empty($search_query)): ?>
+                            <h3>🔍 No games found for "<?php echo htmlspecialchars($search_query); ?>"</h3>
+                            <p>Try adjusting your search terms or <a href="?<?php echo ($selected_category !== 'all') ? 'category=' . $selected_category : ''; ?>">browse all your games</a>.</p>
+                        <?php elseif ($selected_category !== 'all'): ?>
+                            <h3>No <?php echo ucfirst($selected_category); ?> games in your library</h3>
+                            <p><a href="?">Browse all your games</a> or <a href="shop.php?category=<?php echo $selected_category; ?>">get more <?php echo $selected_category; ?> games</a>.</p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
