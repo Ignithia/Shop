@@ -328,6 +328,27 @@ input::placeholder {
   box-shadow: var(--glow-blue);
 }
 
+.btn-secondary {
+  background: linear-gradient(45deg, var(--accent-purple), #8b5cf6);
+  color: white;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(45deg, #8b5cf6, var(--accent-purple));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+  border-color: var(--accent-purple);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
 .card-btn {
   background: var(--btn-success);
   color: white;
