@@ -54,6 +54,22 @@ function getDataCounts($current_username) {
 }
 
 $data_counts = getDataCounts($username);
+
+function getUserCoins($username) {
+    if (file_exists('data/users.json')) {
+        $users_data = json_decode(file_get_contents('data/users.json'), true);
+        if (is_array($users_data)) {
+            foreach ($users_data as $user) {
+                if ($user['username'] === $username) {
+                    return isset($user['coins']) ? $user['coins'] : 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+$user_coins = getUserCoins($username);
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -67,12 +83,25 @@ $data_counts = getDataCounts($username);
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>User: <?php echo htmlspecialchars($username); ?></span>
-            <span class="nav-btn active">Dashboard</span>
-            <a href="shop.php" class="nav-btn">Shop</a>
-            <a href="library.php" class="nav-btn">Library</a>
-            <a href="cart.php" class="nav-btn">Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
-            <a href="?logout=1" class="logout-btn">Logout</a>
+            <div class="user-details">
+                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
+                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+            </div>
+            <div class="navigation">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn">Menu ▼</button>
+                    <div class="nav-dropdown-content">
+                        <a href="index.php" class="active">📊 Dashboard</a>
+                        <a href="shop.php">🛒 Shop</a>
+                        <a href="library.php">📚 Library</a>
+                        <a href="cart.php">🛍️ Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
+                        <div class="nav-divider"></div>
+                        <a href="?logout=1" class="logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
         </div>
     </header>
 

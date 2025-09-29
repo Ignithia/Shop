@@ -79,6 +79,23 @@ foreach ($_SESSION['cart'] as $game_id) {
         $total_price += $game['price'];
     }
 }
+
+// Get user's coin balance
+function getUserCoins($username) {
+    if (file_exists('data/users.json')) {
+        $users_data = json_decode(file_get_contents('data/users.json'), true);
+        if (is_array($users_data)) {
+            foreach ($users_data as $user) {
+                if ($user['username'] === $username) {
+                    return isset($user['coins']) ? $user['coins'] : 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+$user_coins = getUserCoins($username);
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -92,12 +109,25 @@ foreach ($_SESSION['cart'] as $game_id) {
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>Player: <?php echo htmlspecialchars($username); ?></span>
-            <a href="index.php" class="nav-btn">Dashboard</a>
-            <a href="shop.php" class="nav-btn">Shop</a>
-            <a href="library.php" class="nav-btn">Library</a>
-            <span class="nav-btn active">Cart (<?php echo count($_SESSION['cart']); ?>)</span>
-            <a href="?logout=1" class="logout-btn">Logout</a>
+            <div class="user-details">
+                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
+                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+            </div>
+            <div class="navigation">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn">Menu ▼</button>
+                    <div class="nav-dropdown-content">
+                        <a href="index.php">📊 Dashboard</a>
+                        <a href="shop.php">🛒 Shop</a>
+                        <a href="library.php">📚 Library</a>
+                        <a href="cart.php" class="active">🛍️ Cart (<?php echo count($_SESSION['cart']); ?>)</a>
+                        <div class="nav-divider"></div>
+                        <a href="?logout=1" class="logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
         </div>
     </header>
 
@@ -130,7 +160,7 @@ foreach ($_SESSION['cart'] as $game_id) {
                                     <p class="cart-item-description"><?php echo htmlspecialchars($game['description']); ?></p>
                                 </div>
                                 <div class="cart-item-price">
-                                    $<?php echo number_format($game['price'], 2); ?>
+                                                                <div class="game-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
                                 </div>
                                 <div class="cart-item-actions">
                                     <form method="post" style="display: inline;">
@@ -150,22 +180,19 @@ foreach ($_SESSION['cart'] as $game_id) {
                             <h3>Order Summary</h3>
                             <div class="summary-row">
                                 <span>Items (<?php echo count($cart_games); ?>):</span>
-                                <span>$<?php echo number_format($total_price, 2); ?></span>
+                                <span>🪙 <?php echo number_format($total_price * 100); ?></span>
                             </div>
                             <div class="summary-row">
                                 <span>Tax:</span>
-                                <span>$0.00</span>
+                                <span>🪙 0</span>
                             </div>
                             <div class="summary-row total">
                                 <span>Total:</span>
-                                <span>$<?php echo number_format($total_price, 2); ?></span>
+                                <span>🪙 <?php echo number_format($total_price * 100); ?></span>
                             </div>
                             
                             <div class="cart-actions">
-                                <form method="post" action="purchase.php">
-                                    <input type="hidden" name="checkout" value="1">
-                                    <button type="submit" class="btn btn-primary">Proceed to Checkout</button>
-                                </form>
+                                <a href="checkout.php" class="btn btn-primary">Proceed to Checkout</a>
                                 <form method="post">
                                     <input type="hidden" name="action" value="clear">
                                     <button type="submit" class="btn btn-secondary" onclick="return confirm('Clear entire cart?')">

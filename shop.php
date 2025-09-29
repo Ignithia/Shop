@@ -28,6 +28,38 @@ function loadGames() {
 
 $games = loadGames();
 
+// Get the coins for each user
+function getUserCoins($username) {
+    if (file_exists('data/users.json')) {
+        $users_data = json_decode(file_get_contents('data/users.json'), true);
+        if (is_array($users_data)) {
+            foreach ($users_data as $user) {
+                if ($user['username'] === $username) {
+                    return isset($user['coins']) ? $user['coins'] : 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+$user_coins = getUserCoins($username);
+
+// Check if user already owns this game
+function userOwnsGame($username, $game_id) {
+    if (file_exists('data/users.json')) {
+        $users_data = json_decode(file_get_contents('data/users.json'), true);
+        if (is_array($users_data)) {
+            foreach ($users_data as $user) {
+                if ($user['username'] === $username) {
+                    return isset($user['owned_games']) && in_array($game_id, $user['owned_games']);
+                }
+            }
+        }
+    }
+    return false;
+}
+
 // Get category and search using URL parameters
 $selected_category = $_GET['category'] ?? 'all';
 $search_query = $_GET['search'] ?? '';
@@ -80,12 +112,23 @@ $categories = loadCategories();
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>User: <?php echo htmlspecialchars($username); ?></span>
-            <a href="index.php" class="nav-btn">Dashboard</a>
-            <span class="nav-btn active">Shop</span>
-            <a href="library.php" class="nav-btn">Library</a>
-            <a href="cart.php" class="nav-btn">Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
-            <a href="?logout=1" class="logout-btn">Logout</a>
+            <div class="user-details">
+                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
+                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+            </div>
+            <div class="navigation">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn">Menu ▼</button>
+                    <div class="nav-dropdown-content">
+                        <a href="index.php">📊 Dashboard</a>
+                        <a href="shop.php" class="active">🛒 Shop</a>
+                        <a href="library.php">📚 Library</a>
+                        <a href="cart.php">🛍️ Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
+                        <div class="nav-divider"></div>
+                        <a href="?logout=1" class="logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -148,26 +191,32 @@ $categories = loadCategories();
                         </h3>
                         <p class="game-category"><?php echo ucfirst($game['category']); ?></p>
                         
-                        <?php if (isset($game['is_new']) && $game['is_new']): ?>
-                            <div class="new-badge-small">NEW</div>
-                        <?php endif; ?>
+                        <div class="game-badges">
+                            <?php if (isset($game['is_new']) && $game['is_new']): ?>
+                                <div class="new-badge-small">NEW</div>
+                            <?php endif; ?>
+                        </div>
                         
                         <!-- Price -->
                         <div class="game-pricing">
                             <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
-                                <span class="original-price">$<?php echo number_format($game['original_price'], 2); ?></span>
-                                <span class="sale-price">$<?php echo number_format($game['price'], 2); ?></span>
+                                <span class="original-price">🪙 <?php echo number_format($game['original_price'] * 100); ?></span>
+                                <span class="sale-price">🪙 <?php echo number_format($game['price'] * 100); ?></span>
                             <?php else: ?>
-                                <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
+                                <div class="game-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
                             <?php endif; ?>
                         </div>
                         
                         <div class="game-actions">
-                            <form method="post" action="cart.php" style="display: inline;">
-                                <input type="hidden" name="action" value="add">
-                                <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
-                                <button type="submit" class="buy-btn">Add to Cart</button>
-                            </form>
+                            <?php if (userOwnsGame($username, $game['id'])): ?>
+                                <button class="buy-btn owned" disabled>✓ Owned</button>
+                            <?php else: ?>
+                                <form method="post" action="cart.php" style="display: inline;">
+                                    <input type="hidden" name="action" value="add">
+                                    <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                    <button type="submit" class="buy-btn">Add to Cart</button>
+                                </form>
+                            <?php endif; ?>
                             <a href="product.php?id=<?php echo $game['id']; ?>" class="card-btn secondary">View Details</a>
                         </div>
                     </div>

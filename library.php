@@ -63,7 +63,24 @@ foreach ($owned_game_ids as $game_id) {
 $selected_category = $_GET['category'] ?? 'all';
 $search_query = $_GET['search'] ?? '';
 
-$filtered_owned_games = $owned_games;
+$filtered_owned_games = $all_owned_games;
+
+// Get the coins for each user
+function getUserCoins($username) {
+    if (file_exists('data/users.json')) {
+        $users_data = json_decode(file_get_contents('data/users.json'), true);
+        if (is_array($users_data)) {
+            foreach ($users_data as $user) {
+                if ($user['username'] === $username) {
+                    return isset($user['coins']) ? $user['coins'] : 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+$user_coins = getUserCoins($username);
 if ($selected_category !== 'all') {
     $filtered_owned_games = array_filter($owned_games, function($game) use ($selected_category) {
         return $game['category'] === $selected_category;
@@ -115,12 +132,23 @@ $categories = loadCategories();
     <header class="header">
         <h1>GAME STORE</h1>
         <div class="user-info">
-            <span>Player: <?php echo htmlspecialchars($username); ?></span>
-            <a href="index.php" class="nav-btn">Dashboard</a>
-            <a href="shop.php" class="nav-btn">Shop</a>
-            <span class="nav-btn active">Library</span>
-            <a href="cart.php" class="nav-btn">Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
-            <a href="?logout=1" class="logout-btn">Logout</a>
+            <div class="user-details">
+                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
+                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+            </div>
+            <div class="navigation">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn">Menu ▼</button>
+                    <div class="nav-dropdown-content">
+                        <a href="index.php">📊 Dashboard</a>
+                        <a href="shop.php">🛒 Shop</a>
+                        <a href="library.php" class="active">📚 Library</a>
+                        <a href="cart.php">🛍️ Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
+                        <div class="nav-divider"></div>
+                        <a href="?logout=1" class="logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -187,7 +215,7 @@ $categories = loadCategories();
                         <div class="stat-label">Categories</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">$<?php echo number_format(array_sum(array_column($filtered_owned_games, 'price')), 2); ?></div>
+                        <div class="stat-number">🪙 <?php echo number_format(array_sum(array_column($filtered_owned_games, 'price')) * 100); ?></div>
                         <div class="stat-label">Total Value</div>
                     </div>
                 </div>
@@ -209,7 +237,7 @@ $categories = loadCategories();
                                                 </a>
                                             </h4>
                                             <p class="game-category"><?php echo ucfirst(htmlspecialchars($game['category'])); ?></p>
-                                            <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
+                                            <div class="game-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
                                         </div>
                                         <div class="owned-badge">✓ OWNED</div>
                                     </div>
