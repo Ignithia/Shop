@@ -111,7 +111,7 @@ function formatCoins($amount) {
 </head>
 <body>
     <header class="header">
-        <h1>GAME STORE</h1>
+        <h1><a href="index.php" class="logo-link">GAME STORE</a></h1>
         <div class="user-info">
             <div class="user-details">
                 <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>

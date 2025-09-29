@@ -137,15 +137,25 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
 </head>
 <body>
     <header class="header">
-        <h1>GAME STORE</h1>
+        <h1><a href="index.php" class="logo-link">GAME STORE</a></h1>
         <div class="user-info">
-            <span>Player: <?php echo htmlspecialchars($username); ?></span>
-            <span class="coins-display">🪙 <?php echo formatCoins($user_coins); ?> Coins</span>
-            <a href="index.php" class="nav-btn">Dashboard</a>
-            <a href="shop.php" class="nav-btn">Shop</a>
-            <a href="library.php" class="nav-btn">Library</a>
-            <a href="cart.php" class="nav-btn">Cart (<?php echo count($cart); ?>)</a>
-            <a href="?logout=1" class="logout-btn">Logout</a>
+            <div class="user-details">
+                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
+                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
+            </div>
+            <div class="navigation">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn">Menu ▼</button>
+                    <div class="nav-dropdown-content">
+                        <a href="index.php">📊 Dashboard</a>
+                        <a href="shop.php">🛒 Shop</a>
+                        <a href="library.php">📚 Library</a>
+                        <a href="cart.php">🛍️ Cart (<?php echo count($cart); ?>)</a>
+                        <div class="nav-divider"></div>
+                        <a href="?logout=1" class="logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 

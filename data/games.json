@@ -3,8 +3,8 @@
     "id": 1,
     "name": "Civilization VI",
     "category": "strategy",
-    "price": 59.99,
-    "original_price": 59.99,
+    "price": 5999,
+    "original_price": 5999,
     "image": "./media/civ6.jpg",
     "description": "Build and lead a civilization from the Stone Age to the Information Age.",
     "is_new": false,
@@ -14,13 +14,13 @@
       {
         "id": "civ6_dlc1",
         "name": "Rise and Fall Expansion",
-        "price": 29.99,
+        "price": 2999,
         "description": "Adds new civilizations, leaders, and game mechanics including Golden Ages and Dark Ages."
       },
       {
         "id": "civ6_dlc2",
         "name": "Gathering Storm Expansion",
-        "price": 39.99,
+        "price": 3999,
         "description": "Natural disasters, climate change, and new civilizations reshape your empire."
       }
     ]
@@ -43,7 +43,7 @@
     "name": "Total War: Warhammer III",
     "category": "strategy",
     "price": 6999,
-    "original_price": 69.99,
+    "original_price": 6999,
     "image": "./media/totalwar.jpg",
     "description": "The culmination of the Total War: Warhammer trilogy.",
     "is_new": true,
@@ -53,7 +53,7 @@
       {
         "id": "tw_wh3_dlc1",
         "name": "Champions of Chaos",
-        "price": 24.99,
+        "price": 2499,
         "description": "Four new Legendary Lords for the Warriors of Chaos."
       }
     ]
@@ -62,8 +62,8 @@
     "id": 4,
     "name": "Sekiro: Shadows Die Twice",
     "category": "action",
-    "price": 34.99,
-    "original_price": 49.99,
+    "price": 3499,
+    "original_price": 4999,
     "image": "./media/sekiro.jpg",
     "description": "Intense action-adventure game with challenging combat.",
     "is_new": false,
@@ -75,8 +75,8 @@
     "id": 5,
     "name": "Devil May Cry 5",
     "category": "action",
-    "price": 44.99,
-    "original_price": 44.99,
+    "price": 4499,
+    "original_price": 4499,
     "image": "./media/devilmaycry.jpeg",
     "description": "Stylish action game with demon hunting and combo system.",
     "is_new": false,
@@ -86,7 +86,7 @@
       {
         "id": "dmc5_dlc1",
         "name": "Vergil DLC",
-        "price": 4.99,
+        "price": 499,
         "description": "Play as Vergil with unique gameplay mechanics and story missions."
       }
     ]
@@ -95,8 +95,8 @@
     "id": 6,
     "name": "DOOM Eternal",
     "category": "action",
-    "price": 54.99,
-    "original_price": 54.99,
+    "price": 5499,
+    "original_price": 5499,
     "image": "./media/doom.jpg",
     "description": "Fast-paced first-person shooter with intense demon slaying.",
     "is_new": true,
@@ -106,13 +106,13 @@
       {
         "id": "doom_dlc1",
         "name": "The Ancient Gods - Part One",
-        "price": 19.99,
+        "price": 1999,
         "description": "Continue the DOOM Slayer's saga with new demons and challenging combat."
       },
       {
         "id": "doom_dlc2",
         "name": "The Ancient Gods - Part Two",
-        "price": 19.99,
+        "price": 1999,
         "description": "The epic conclusion to the DOOM Slayer's story."
       }
     ]
@@ -121,8 +121,8 @@
     "id": 7,
     "name": "Minecraft",
     "category": "sandbox",
-    "price": 29.99,
-    "original_price": 29.99,
+    "price": 2999,
+    "original_price": 2999,
     "image": "./media/minecraft.jpg",
     "description": "Creative sandbox game where you can build anything you imagine.",
     "is_new": false,
@@ -134,8 +134,8 @@
     "id": 8,
     "name": "Terraria",
     "category": "sandbox",
-    "price": 9.99,
-    "original_price": 19.99,
+    "price": 999,
+    "original_price": 1999,
     "image": "./media/terraria.jpg",
     "description": "2D adventure sandbox game with crafting and exploration.",
     "is_new": false,
@@ -147,8 +147,8 @@
     "id": 9,
     "name": "The Sims 4",
     "category": "simulation",
-    "price": 39.99,
-    "original_price": 39.99,
+    "price": 3999,
+    "original_price": 3999,
     "image": "./media/sims4.jpg",
     "description": "Life simulation game where you create and control virtual people.",
     "is_new": false,
@@ -158,19 +158,19 @@
       {
         "id": "sims4_dlc1",
         "name": "City Living Expansion",
-        "price": 39.99,
+        "price": 3999,
         "description": "Move to the big city and experience apartment living with festivals and careers."
       },
       {
         "id": "sims4_dlc2",
         "name": "Seasons Expansion",
-        "price": 39.99,
+        "price": 3999,
         "description": "Experience weather, holidays, and seasonal activities throughout the year."
       },
       {
         "id": "sims4_dlc3",
         "name": "Cats & Dogs Expansion",
-        "price": 39.99,
+        "price": 3999,
         "description": "Create and care for cats and dogs, and become a veterinarian."
       }
     ]
@@ -179,8 +179,8 @@
     "id": 10,
     "name": "Microsoft Flight Simulator",
     "category": "simulation",
-    "price": 79.99,
-    "original_price": 79.99,
+    "price": 7999,
+    "original_price": 7999,
     "image": "./media/microsoftflight.jpg",
     "description": "Ultra-realistic flight simulation with stunning visuals.",
     "is_new": true,
@@ -190,25 +190,25 @@
       {
         "id": "msfs_dlc1",
         "name": "Top Gun: Maverick Expansion",
-        "price": 19.99,
+        "price": 1999,
         "description": "Fly iconic aircraft from the Top Gun: Maverick movie with training missions."
       },
       {
         "id": "msfs_dlc2",
         "name": "World Update I: Japan",
-        "price": 0.0,
+        "price": 0,
         "description": "Enhanced airports, improved digital elevation model, and photogrammetry cities in Japan."
       },
       {
         "id": "msfs_dlc3",
         "name": "Premium Deluxe Aircraft Pack",
-        "price": 29.99,
+        "price": 2999,
         "description": "Five additional highly detailed aircraft including the Boeing 787-10 Dreamliner."
       },
       {
         "id": "msfs_dlc4",
         "name": "Famous Flyers Aircraft Pack",
-        "price": 24.99,
+        "price": 2499,
         "description": "Collection of legendary aircraft including the P-51D Mustang and Spitfire."
       }
     ]
@@ -217,8 +217,8 @@
     "id": 11,
     "name": "Baldur's Gate III",
     "category": "strategy",
-    "price": 59.99,
-    "original_price": 59.99,
+    "price": 5999,
+    "original_price": 5999,
     "image": "./media/bg3.jpg",
     "description": "Baldur's Gate 3 is a story-rich, party-based RPG set in the universe of Dungeons & Dragons, where your choices shape a tale of fellowship and betrayal, survival and sacrifice, and the lure of absolute power.",
     "is_new": false,
@@ -228,13 +228,13 @@
       {
         "id": "bg3_dlc1",
         "name": "Baldur's Gate III: Digital Deluxe Edition",
-        "price": 9.75,
+        "price": 975,
         "description": "For those looking to get a little more out of Baldur’s Gate 3, the Digital Deluxe Edition upgrade content includes in-game cosmetics, such as a unique custom dice skin to show off to your friends, as well as practical in-game items such as the Mask of the Shapeshifter from Divinity: Original Sin 2. Listen to the magical music of Borislav Slavov’s Original Soundtrack for Baldur’s Gate 3 or even pick up a pen and play D&D as one of our Origin characters with the handy printable pre-made character sheets. There’s plenty to get stuck into, in and outside of the game."
       },
       {
         "id": "bg3_dlc2",
         "name": "Baldur's Gate III: Toolkit Data",
-        "price": 0.0,
+        "price": 0,
         "description": "Unlock the official Baldur's Gate 3 Toolkit and reshape the world of Faerûn. This powerful modding engine lets you: \n- Create and publish your own mods to share with the community.\n- Develop new character classes and subclasses.\n- Design custom spells and magical abilities.\n- Personalize dice skins for unique gameplay flair.\n- Add original weapons and armor to expand your arsenal.\n- Make scripting changes using Osiris, the game's scripting language, to define custom behaviors and events.\nAnd much more—bring your creative vision to life in Baldur's Gate 3!"
       }
     ]
