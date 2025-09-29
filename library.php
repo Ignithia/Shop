@@ -81,6 +81,10 @@ function getUserCoins($username) {
 }
 
 $user_coins = getUserCoins($username);
+
+function formatCoins($amount) {
+    return number_format($amount, 0, ',', '.');
+}
 if ($selected_category !== 'all') {
     $filtered_owned_games = array_filter($owned_games, function($game) use ($selected_category) {
         return $game['category'] === $selected_category;
@@ -121,7 +125,7 @@ function loadCategories() {
 $categories = loadCategories();
 ?>
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -134,7 +138,7 @@ $categories = loadCategories();
         <div class="user-info">
             <div class="user-details">
                 <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
             </div>
             <div class="navigation">
                 <div class="nav-dropdown">
@@ -215,7 +219,7 @@ $categories = loadCategories();
                         <div class="stat-label">Categories</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">🪙 <?php echo number_format(array_sum(array_column($filtered_owned_games, 'price')) * 100); ?></div>
+                        <div class="stat-number">🪙 <?php echo formatCoins(array_sum(array_column($filtered_owned_games, 'price'))); ?></div>
                         <div class="stat-label">Total Value</div>
                     </div>
                 </div>
@@ -237,7 +241,7 @@ $categories = loadCategories();
                                                 </a>
                                             </h4>
                                             <p class="game-category"><?php echo ucfirst(htmlspecialchars($game['category'])); ?></p>
-                                            <div class="game-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
+                                            <div class="game-price">🪙 <?php echo formatCoins($game['price']); ?></div>
                                         </div>
                                         <div class="owned-badge">✓ OWNED</div>
                                     </div>

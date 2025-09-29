@@ -45,6 +45,10 @@ function getUserCoins($username) {
 
 $user_coins = getUserCoins($username);
 
+function formatCoins($amount) {
+    return number_format($amount, 0, ',', '.');
+}
+
 // Check if user already owns this game
 function userOwnsGame($username, $game_id) {
     if (file_exists('data/users.json')) {
@@ -101,7 +105,7 @@ function loadCategories() {
 $categories = loadCategories();
 ?>
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -114,7 +118,7 @@ $categories = loadCategories();
         <div class="user-info">
             <div class="user-details">
                 <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
             </div>
             <div class="navigation">
                 <div class="nav-dropdown">
@@ -200,10 +204,10 @@ $categories = loadCategories();
                         <!-- Price -->
                         <div class="game-pricing">
                             <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
-                                <span class="original-price">🪙 <?php echo number_format($game['original_price'] * 100); ?></span>
-                                <span class="sale-price">🪙 <?php echo number_format($game['price'] * 100); ?></span>
+                                <span class="original-price">🪙 <?php echo formatCoins($game['original_price']); ?></span>
+                                <span class="sale-price">🪙 <?php echo formatCoins($game['price']); ?></span>
                             <?php else: ?>
-                                <div class="game-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
+                                <div class="game-price">🪙 <?php echo formatCoins($game['price']); ?></div>
                             <?php endif; ?>
                         </div>
                         

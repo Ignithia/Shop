@@ -96,9 +96,13 @@ function getUserCoins($username) {
 }
 
 $user_coins = getUserCoins($username);
+
+function formatCoins($amount) {
+    return number_format($amount, 0, ',', '.');
+}
 ?>
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -111,7 +115,7 @@ $user_coins = getUserCoins($username);
         <div class="user-info">
             <div class="user-details">
                 <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
             </div>
             <div class="navigation">
                 <div class="nav-dropdown">
@@ -160,7 +164,7 @@ $user_coins = getUserCoins($username);
                                     <p class="cart-item-description"><?php echo htmlspecialchars($game['description']); ?></p>
                                 </div>
                                 <div class="cart-item-price">
-                                                                <div class="game-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
+                                                                <div class="game-price">🪙 <?php echo formatCoins($game['price']); ?></div>
                                 </div>
                                 <div class="cart-item-actions">
                                     <form method="post" style="display: inline;">
@@ -180,7 +184,7 @@ $user_coins = getUserCoins($username);
                             <h3>Order Summary</h3>
                             <div class="summary-row">
                                 <span>Items (<?php echo count($cart_games); ?>):</span>
-                                <span>🪙 <?php echo number_format($total_price * 100); ?></span>
+                                <span>🪙 <?php echo formatCoins($total_price); ?></span>
                             </div>
                             <div class="summary-row">
                                 <span>Tax:</span>
@@ -188,7 +192,7 @@ $user_coins = getUserCoins($username);
                             </div>
                             <div class="summary-row total">
                                 <span>Total:</span>
-                                <span>🪙 <?php echo number_format($total_price * 100); ?></span>
+                                <span>🪙 <?php echo formatCoins($total_price); ?></span>
                             </div>
                             
                             <div class="cart-actions">

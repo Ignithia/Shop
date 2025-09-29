@@ -81,9 +81,13 @@ function getUserCoins($username) {
 }
 
 $user_coins = getUserCoins($username);
+
+function formatCoins($amount) {
+    return number_format($amount, 0, ',', '.');
+}
 ?>
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -96,7 +100,7 @@ $user_coins = getUserCoins($username);
         <div class="user-info">
             <div class="user-details">
                 <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
             </div>
             <div class="navigation">
                 <div class="nav-dropdown">
@@ -137,11 +141,11 @@ $user_coins = getUserCoins($username);
                     <div class="product-pricing">
                         <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
                             <div class="price-container">
-                                <span class="original-price">🪙 <?php echo number_format($game['original_price'] * 100); ?></span>
-                                <span class="sale-price">🪙 <?php echo number_format($game['price'] * 100); ?></span>
+                                <span class="original-price">🪙 <?php echo formatCoins($game['original_price']); ?></span>
+                                <span class="sale-price">🪙 <?php echo formatCoins($game['price']); ?></span>
                             </div>
                         <?php else: ?>
-                            <div class="product-price">🪙 <?php echo number_format($game['price'] * 100); ?></div>
+                            <div class="product-price">🪙 <?php echo formatCoins($game['price']); ?></div>
                         <?php endif; ?>
                     </div>
                     
@@ -168,7 +172,7 @@ $user_coins = getUserCoins($username);
                         <strong>Category:</strong> <?php echo ucfirst(htmlspecialchars($game['category'])); ?>
                     </div>
                     <div class="detail-item">
-                        <strong>Price:</strong> 🪙 <?php echo number_format($game['price'] * 100); ?>
+                        <strong>Price:</strong> 🪙 <?php echo formatCoins($game['price']); ?>
                     </div>
                     <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
                     <div class="detail-item">

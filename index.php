@@ -70,9 +70,13 @@ function getUserCoins($username) {
 }
 
 $user_coins = getUserCoins($username);
+
+function formatCoins($amount) {
+    return number_format($amount, 0, ',', '.');
+}
 ?>
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -85,7 +89,7 @@ $user_coins = getUserCoins($username);
         <div class="user-info">
             <div class="user-details">
                 <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo number_format($user_coins); ?></span>
+                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
             </div>
             <div class="navigation">
                 <div class="nav-dropdown">
