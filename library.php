@@ -133,28 +133,7 @@ $categories = loadCategories();
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-    <header class="header">
-        <h1><a href="index.php" class="logo-link">GAME STORE</a></h1>
-        <div class="user-info">
-            <div class="user-details">
-                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
-            </div>
-            <div class="navigation">
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-btn">Menu ▼</button>
-                    <div class="nav-dropdown-content">
-                        <a href="index.php">📊 Dashboard</a>
-                        <a href="shop.php">🛒 Shop</a>
-                        <a href="library.php" class="active">📚 Library</a>
-                        <a href="cart.php">🛍️ Cart (<?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?>)</a>
-                        <div class="nav-divider"></div>
-                        <a href="?logout=1" class="logout">🚪 Logout</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php include './inc/header.inc.php'; ?>
 
     <div class="container">
         <div class="library-page">
@@ -266,5 +245,7 @@ $categories = loadCategories();
             <?php endif; ?>
         </div>
     </div>
+
+    <?php include './inc/footer.inc.php'; ?>
 </body>
 </html>

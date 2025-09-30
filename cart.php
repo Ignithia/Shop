@@ -110,30 +110,7 @@ function formatCoins($amount) {
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-    <header class="header">
-        <h1><a href="index.php" class="logo-link">GAME STORE</a></h1>
-        <div class="user-info">
-            <div class="user-details">
-                <span class="username">Player: <?php echo htmlspecialchars($username); ?></span>
-                <span class="balance">🪙 <?php echo formatCoins($user_coins); ?></span>
-            </div>
-            <div class="navigation">
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-btn">Menu ▼</button>
-                    <div class="nav-dropdown-content">
-                        <a href="index.php">📊 Dashboard</a>
-                        <a href="shop.php">🛒 Shop</a>
-                        <a href="library.php">📚 Library</a>
-                        <a href="cart.php" class="active">🛍️ Cart (<?php echo count($_SESSION['cart']); ?>)</a>
-                        <div class="nav-divider"></div>
-                        <a href="?logout=1" class="logout">🚪 Logout</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-        </div>
-    </header>
+    <?php include './inc/header.inc.php'; ?>
 
     <div class="container">
         <div class="cart-page">
@@ -211,5 +188,6 @@ function formatCoins($amount) {
             <?php endif; ?>
         </div>
     </div>
+    <?php include './inc/footer.inc.php'; ?>
 </body>
 </html>
