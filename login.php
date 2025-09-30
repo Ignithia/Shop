@@ -9,7 +9,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 
 $error_message = '';
 
-// Mock user database (in a real app, this would be in a database)
+// Mock user database
 $users_file = 'data/users.json';
 if(file_exists($users_file)){
     $users = json_decode(file_get_contents($users_file),true);

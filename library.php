@@ -63,7 +63,7 @@ foreach ($owned_game_ids as $game_id) {
 $selected_category = $_GET['category'] ?? 'all';
 $search_query = $_GET['search'] ?? '';
 
-$filtered_owned_games = $all_owned_games;
+$filtered_owned_games = $owned_games;
 
 // Get the coins for each user
 function getUserCoins($username) {

@@ -1,42 +1,59 @@
 [
-  {
-    "id": 1,
-    "username": "ryan",
-    "email": "ryan@shop.com",
-    "password": "password123",
-    "coins": 10000,
-    "owned_games": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-  },
-  {
-    "id": 2,
-    "username": "gamer123",
-    "email": "gamer@example.com",
-    "password": "game2024",
-    "coins": 5000,
-    "owned_games": []
-  },
-  {
-    "id": 3,
-    "username": "Hannah",
-    "email": "hannah@shop.com",
-    "password": "password321",
-    "coins": 7500,
-    "owned_games": []
-  },
-  {
-    "id": 4,
-    "username": "Bob",
-    "email": "bob@store.com",
-    "password": "bob123",
-    "coins": 3000,
-    "owned_games": []
-  },
-  {
-    "id": 5,
-    "username": "Nunzioke",
-    "email": "poldemol@gmail.com",
-    "password": "LOL123",
-    "coins": 20000,
-    "owned_games": []
-  }
+    {
+        "id": 1,
+        "username": "ryan",
+        "email": "ryan@shop.com",
+        "password": "password123",
+        "coins": 10000,
+        "owned_games": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+        ]
+    },
+    {
+        "id": 2,
+        "username": "gamer123",
+        "email": "gamer@example.com",
+        "password": "game2024",
+        "coins": 5000,
+        "owned_games": []
+    },
+    {
+        "id": 3,
+        "username": "Hannah",
+        "email": "hannah@shop.com",
+        "password": "password321",
+        "coins": 7500,
+        "owned_games": []
+    },
+    {
+        "id": 4,
+        "username": "Bob",
+        "email": "bob@store.com",
+        "password": "bob123",
+        "coins": 3000,
+        "owned_games": []
+    },
+    {
+        "id": 5,
+        "username": "Nunzioke",
+        "email": "poldemol@gmail.com",
+        "password": "LOL123",
+        "coins": 4004,
+        "owned_games": [
+            7,
+            10,
+            8,
+            9
+        ]
+    }
 ]
