@@ -70,9 +70,7 @@ foreach ($filtered_owned_games as $game) {
 // Get user balance
 $user_balance = $current_user->getBalance();
 
-function formatPrice($amount) {
-    return '$' . number_format($amount, 2);
-}
+
 
 // Load categories from database
 $categories_data = Game::getAllCategories($pdo);
@@ -156,7 +154,7 @@ foreach ($categories_data as $category) {
                         <div class="stat-label">Categories</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number"><?php echo formatPrice(array_sum(array_column($filtered_owned_games, 'price'))); ?></div>
+                        <div class="stat-number"><?php echo Game::formatCoinsFromDollars(array_sum(array_column($filtered_owned_games, 'price'))); ?></div>
                         <div class="stat-label">Total Value</div>
                     </div>
                 </div>
@@ -169,8 +167,14 @@ foreach ($categories_data as $category) {
                                 <?php foreach ($category_games as $game): ?>
                                     <div class="game-card library-card">
                                         <a href="product.php?id=<?php echo $game['id']; ?>">
-                                            <img src="media/game_<?php echo $game['id']; ?>.jpg" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image" onerror="this.src='media/placeholder.jpg'">
-                                        </a>
+                                            <a href="product.php?id=<?php echo $game['id']; ?>">
+                                                <?php 
+                                                    $game_obj = new Game($pdo);
+                                                    $game_obj->loadById($game['id']);
+                                                    $screenshots = $game_obj->getScreenshots();
+                                                    $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                                                ?>
+                                                <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image"></a>
                                         <div class="game-info">
                                             <h4 class="game-title">
                                                 <a href="product.php?id=<?php echo $game['id']; ?>">
@@ -178,7 +182,7 @@ foreach ($categories_data as $category) {
                                                 </a>
                                             </h4>
                                             <p class="game-category"><?php echo ucfirst(htmlspecialchars($game['category_name'] ?? 'Unknown')); ?></p>
-                                            <div class="game-price"><?php echo formatPrice($game['price']); ?></div>
+                                            <div class="game-price"><?php echo Game::formatCoinsFromDollars($game['price']); ?></div>
                                         </div>
                                         <div class="owned-badge">✓ OWNED</div>
                                     </div>

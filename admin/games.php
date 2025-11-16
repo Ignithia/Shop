@@ -125,8 +125,18 @@ $totalPages = ceil($totalGames / 20);
 $currentPage = intval($_GET['page'] ?? 0);
 
 $pageTitle = 'Game Management';
-include '../inc/header.inc.php';
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+<?php include '../inc/header.inc.php'; ?>
 
 <div class="container-fluid mt-4">
     <div class="row">
@@ -168,10 +178,74 @@ include '../inc/header.inc.php';
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1><i class="fas fa-gamepad"></i> Game Management</h1>
                 <div>
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addGameModal">
+                    <button type="button" class="btn btn-success" id="toggleAddGame">
                         <i class="fas fa-plus"></i> Add New Game
                     </button>
                     <span class="badge badge-primary ml-2"><?= number_format($totalGames) ?> Total Games</span>
+                </div>
+            </div>
+
+            <!-- Inline Add Game Form (replaces Bootstrap modal) -->
+            <div class="card mb-4" id="addGameCard" style="display:none;">
+                <div class="card-header">
+                    <h5 class="m-0"><i class="fas fa-plus-circle"></i> Add New Game</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" name="action" value="add_game">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Game Name</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Price (in dollars)</label>
+                                    <input type="number" step="0.01" class="form-control" name="price" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Release Date</label>
+                                    <input type="date" class="form-control" name="release_date" value="<?= date('Y-m-d') ?>" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Screenshot URL</label>
+                                    <input type="url" class="form-control" name="screenshot_url" placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select class="form-control" name="category_id" required>
+                                        <option value="">Select Category</option>
+                                        <?php foreach ($categories as $category): ?>
+                                            <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="sale" id="addGameSale">
+                                    <label class="form-check-label" for="addGameSale">On Sale</label>
+                                </div>
+                                <div class="form-group" id="addGamePercentageGroup" style="display:none;">
+                                    <label>Sale Percentage</label>
+                                    <select class="form-control" name="percentage_id">
+                                        <?php foreach ($percentages as $percentage): ?>
+                                            <?php if ($percentage['percentage'] > 0): ?>
+                                                <option value="<?= $percentage['id'] ?>"><?= $percentage['percentage'] ?>% Off</option>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control" name="description" rows="4" required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Create Game</button>
+                        </div>
+                    </form>
                 </div>
             </div>
             
@@ -415,99 +489,22 @@ include '../inc/header.inc.php';
     </div>
 </div>
 
-<!-- Add Game Modal -->
-<div class="modal fade" id="addGameModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Game</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <form method="post">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="add_game">
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Game Name</label>
-                                <input type="text" class="form-control" name="name" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Price</label>
-                                <input type="number" step="0.01" class="form-control" name="price" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Release Date</label>
-                                <input type="date" class="form-control" name="release_date" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Screenshot URL</label>
-                                <input type="url" class="form-control" name="screenshot_url" placeholder="https://example.com/image.jpg">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Category</label>
-                                <select class="form-control" name="category_id" required>
-                                    <option value="">Select Category</option>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?= $category['id'] ?>">
-                                            <?= htmlspecialchars($category['name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="sale" id="saleNew">
-                                <label class="form-check-label" for="saleNew">
-                                    On Sale
-                                </label>
-                            </div>
-                            
-                            <div class="form-group" id="salePercentageGroup" style="display: none;">
-                                <label>Sale Percentage</label>
-                                <select class="form-control" name="percentage_id">
-                                    <?php foreach ($percentages as $percentage): ?>
-                                        <?php if ($percentage['percentage'] > 0): ?>
-                                            <option value="<?= $percentage['id'] ?>">
-                                                <?= $percentage['percentage'] ?>% Off
-                                            </option>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="form-control" name="description" rows="4" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Add Game</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
+// Toggle add game form card
+document.getElementById('toggleAddGame')?.addEventListener('click', function(){
+    const card = document.getElementById('addGameCard');
+    if (!card) return;
+    card.style.display = (card.style.display === 'none' || card.style.display === '') ? 'block' : 'none';
+});
+
 // Show/hide sale percentage when sale checkbox is toggled
-document.getElementById('saleNew').addEventListener('change', function() {
-    const percentageGroup = document.getElementById('salePercentageGroup');
-    if (this.checked) {
-        percentageGroup.style.display = 'block';
-    } else {
-        percentageGroup.style.display = 'none';
-    }
+document.getElementById('addGameSale')?.addEventListener('change', function() {
+    const percentageGroup = document.getElementById('addGamePercentageGroup');
+    if (!percentageGroup) return;
+    percentageGroup.style.display = this.checked ? 'block' : 'none';
 });
 </script>
 
 <?php include '../inc/footer.inc.php'; ?>
+</body>
+</html>

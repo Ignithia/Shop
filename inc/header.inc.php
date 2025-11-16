@@ -65,7 +65,7 @@ function formatBalance($amount) {
                     <a href="profile.php" class="username-link" style="color: inherit; text-decoration: none;">
                         <span class="username"><?php echo htmlspecialchars($username); ?></span>
                     </a>
-                    <span class="balance"><?php echo formatBalance($user_balance); ?></span>
+                    <span class="balance"><?php echo isset($currentUser) && $currentUser ? $currentUser->getFormattedBalanceCoins() : number_format($user_balance * 100, 0) . ' coins'; ?></span>
                 </div>
                 <?php if(isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true):
                 include 'nav.inc.php'; 

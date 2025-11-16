@@ -95,8 +95,18 @@ $topGames = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $pageTitle = 'Admin Dashboard';
-include '../inc/header.inc.php';
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+<?php include '../inc/header.inc.php'; ?>
 
 <div class="container-fluid mt-4">
     <div class="row">
@@ -382,3 +392,5 @@ include '../inc/header.inc.php';
 </div>
 
 <?php include '../inc/footer.inc.php'; ?>
+</body>
+</html>

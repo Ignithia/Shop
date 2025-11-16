@@ -109,6 +109,18 @@ function formatPrice($amount) {
                 <p>Manage your account settings, profile, and security preferences.</p>
                 <a href="profile.php" class="card-btn secondary">View Profile</a>
             </div>
+
+            <?php if ($current_user->isAdmin()): ?>
+            <div class="dashboard-card">
+                <h3>🛠 Admin</h3>
+                <p>Quick access to admin tools and reports.</p>
+                <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                    <a href="admin/dashboard.php" class="card-btn">Dashboard</a>
+                    <a href="admin/users.php" class="card-btn secondary">Users</a>
+                    <a href="admin/games.php" class="card-btn secondary">Games</a>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 
