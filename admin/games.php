@@ -30,7 +30,7 @@ $message = '';
 $error = '';
 
 // Handle game actions
-if ($_POST['action'] ?? '' === 'add_game') {
+if (($_POST['action'] ?? '') === 'add_game') {
     $name = trim($_POST['name']);
     $description = trim($_POST['description']);
     $price = floatval($_POST['price']);
@@ -51,8 +51,11 @@ if ($_POST['action'] ?? '' === 'add_game') {
     }
 }
 
-if ($_POST['action'] ?? '' === 'update_game') {
-    $gameId = intval($_POST['game_id']);
+if (($_POST['action'] ?? '') === 'update_game') {
+    $gameId = isset($_POST['game_id']) ? intval($_POST['game_id']) : 0;
+    if ($gameId <= 0) {
+        $error = 'Invalid game ID.';
+    } else {
     $game = new Game($pdo);
     
     if ($game->loadById($gameId)) {
@@ -69,10 +72,14 @@ if ($_POST['action'] ?? '' === 'update_game') {
             $error = 'Failed to update game.';
         }
     }
+    }
 }
 
-if ($_POST['action'] ?? '' === 'delete_game') {
-    $gameId = intval($_POST['game_id']);
+if (($_POST['action'] ?? '') === 'delete_game') {
+    $gameId = isset($_POST['game_id']) ? intval($_POST['game_id']) : 0;
+    if ($gameId <= 0) {
+        $error = 'Invalid game ID.';
+    } else {
     $game = new Game($pdo);
     
     if ($game->loadById($gameId)) {
@@ -81,6 +88,7 @@ if ($_POST['action'] ?? '' === 'delete_game') {
         } else {
             $error = 'Failed to delete game.';
         }
+    }
     }
 }
 
