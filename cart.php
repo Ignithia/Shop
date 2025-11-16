@@ -1,44 +1,32 @@
 <?php
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Game.php';
+
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+try {
+    $db = Database::getInstance();
+    $pdo = $db->getConnection();
+} catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// Require user to be logged in
+User::requireLogin();
+
+$currentUser = User::getCurrentUser($pdo);
+if (!$currentUser) {
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
 // Logout functionality
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_destroy();
+    User::logout();
     header('Location: login.php');
     exit();
-}
-
-$username = $_SESSION['username'] ?? 'Unknown';
-
-// Initialize cart if not exists
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [];
-}
-
-// Load games from JSON file
-function loadGames() {
-    if (file_exists('data/games.json')) {
-        $games_data = file_get_contents('data/games.json');
-        $games = json_decode($games_data, true);
-        return is_array($games) ? $games : [];
-    }
-    return [];
-}
-
-// Find game by ID
-function findGameById($games, $id) {
-    foreach ($games as $game) {
-        if ($game['id'] == $id) {
-            return $game;
-        }
-    }
-    return null;
 }
 
 // Handle cart actions
@@ -47,19 +35,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $game_id = (int)($_POST['game_id'] ?? 0);
     
     if ($action === 'add' && $game_id > 0) {
-        // Add to cart (prevent duplicates)
-        if (!in_array($game_id, $_SESSION['cart'])) {
-            $_SESSION['cart'][] = $game_id;
+        // Check if user already owns this game
+        if (!$currentUser->ownsGame($game_id)) {
+            $currentUser->addToCart($game_id);
+        }
+    } elseif ($action === 'add_multiple' && isset($_POST['game_ids'])) {
+        foreach ($_POST['game_ids'] as $id) {
+            $id = (int)$id;
+            if ($id > 0 && !$currentUser->ownsGame($id)) {
+                $currentUser->addToCart($id);
+            }
         }
     } elseif ($action === 'remove' && $game_id > 0) {
-        // Remove from cart
-        $_SESSION['cart'] = array_filter($_SESSION['cart'], function($id) use ($game_id) {
-            return $id != $game_id;
-        });
-        $_SESSION['cart'] = array_values($_SESSION['cart']); // Reindex array
+        $currentUser->removeFromCart($game_id);
     } elseif ($action === 'clear') {
-        // Clear entire cart
-        $_SESSION['cart'] = [];
+        $currentUser->clearCart();
     }
     
     // Redirect to prevent form resubmission
@@ -67,38 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
-$games = loadGames();
-$cart_games = [];
+// Get cart games and calculate total
+$cart_games = $currentUser->getShoppingCart();
 $total_price = 0;
 
-// Get cart games and calculate total
-foreach ($_SESSION['cart'] as $game_id) {
-    $game = findGameById($games, $game_id);
-    if ($game) {
-        $cart_games[] = $game;
-        $total_price += $game['price'];
-    }
-}
-
-// Get user's coin balance
-function getUserCoins($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['coins']) ? $user['coins'] : 0;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-$user_coins = getUserCoins($username);
-
-function formatCoins($amount) {
-    return number_format($amount, 0, ',', '.');
+foreach ($cart_games as $game) {
+    $total_price += $game['price'];
 }
 ?>
 <!DOCTYPE html>
@@ -130,18 +94,24 @@ function formatCoins($amount) {
                     <div class="cart-items">
                         <?php foreach ($cart_games as $game): ?>
                             <div class="cart-item">
-                                <img src="<?php echo htmlspecialchars($game['image']); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="cart-item-image">
+                                <?php 
+                                $game_obj = new Game($pdo);
+                                $game_obj->loadById($game['id']);
+                                $screenshots = $game_obj->getScreenshots();
+                                $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                                ?>
+                                <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="cart-item-image">
                                 <div class="cart-item-info">
                                     <h3 class="cart-item-title">
                                         <a href="product.php?id=<?php echo $game['id']; ?>">
                                             <?php echo htmlspecialchars($game['name']); ?>
                                         </a>
                                     </h3>
-                                    <p class="cart-item-category"><?php echo ucfirst(htmlspecialchars($game['category'])); ?></p>
+                                    <p class="cart-item-category"><?php echo htmlspecialchars($game['category_name'] ?? 'Unknown'); ?></p>
                                     <p class="cart-item-description"><?php echo htmlspecialchars($game['description']); ?></p>
                                 </div>
                                 <div class="cart-item-price">
-                                                                <div class="game-price">🪙 <?php echo formatCoins($game['price']); ?></div>
+                                    <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
                                 </div>
                                 <div class="cart-item-actions">
                                     <form method="post" style="display: inline;">
@@ -161,15 +131,15 @@ function formatCoins($amount) {
                             <h3>Order Summary</h3>
                             <div class="summary-row">
                                 <span>Items (<?php echo count($cart_games); ?>):</span>
-                                <span>🪙 <?php echo formatCoins($total_price); ?></span>
+                                <span>$<?php echo number_format($total_price, 2); ?></span>
                             </div>
                             <div class="summary-row">
                                 <span>Tax:</span>
-                                <span>🪙 0</span>
+                                <span>$0.00</span>
                             </div>
                             <div class="summary-row total">
                                 <span>Total:</span>
-                                <span>🪙 <?php echo formatCoins($total_price); ?></span>
+                                <span>$<?php echo number_format($total_price, 2); ?></span>
                             </div>
                             
                             <div class="cart-actions">

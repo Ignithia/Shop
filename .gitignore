@@ -1,2 +1,5 @@
 /fiveserver.config.js
 /.php_tmp/
+/example_classes.php
+/classes/*
+/db_setup.sql

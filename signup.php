@@ -1,6 +1,9 @@
 <?php
 session_start();
-$users_file = "./data/users.json";
+
+// Include required classes
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
 
 // If user is already logged in, redirect to index.php
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
@@ -11,73 +14,36 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 $success_message = '';
 $error_message = '';
 
-// Process registration form
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $existing_users_json = file_get_contents($users_file);
-    $existing_users = json_decode($existing_users_json, true);
-    
+// Get database connection
+try {
+    $database = Database::getInstance();
+    $pdo = $database->getConnection();
+} catch (Exception $e) {
+    $error_message = 'Database connection failed. Please try again later.';
+}
 
+// Process registration form
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $confirm_password = trim($_POST['confirm_password'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
     
-    // Validation
-    $errors = [];
-    
-    if (empty($username)) {
-        $errors[] = 'Username is required';
-    } elseif (strlen($username) < 3) {
-        $errors[] = 'Username must be at least 3 characters long';
-    } else {
-        foreach($existing_users as $user){
-            if($user['username'] === $username){
-                $errors[] = "Username has been taken already.";
-            break;
-            }
-        }
-    }
-
-    if (empty($email)) {
-        $errors[] = 'Email is required';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Invalid email address';
-    }else {
-        foreach($existing_users as $user){
-            if($user['email'] === $email){
-                $errors[] = "Email has registered already.";
-            break;
-            }
-        }
-    }
-    
-    if (empty($password)) {
-        $errors[] = 'Password is required';
-    } elseif (strlen($password) < 6) {
-        $errors[] = 'Password must be at least 6 characters long';
-    }
-    
+    // Additional validation for password confirmation
     if ($password !== $confirm_password) {
-        $errors[] = 'Passwords do not match';
-    }
-    
-    if (empty($errors)) {
-        $new_user = [
-            'username' => $username,
-            'email' => $email,
-            'password' => $password
-        ];
-        $existing_users[] = $new_user;
-        $add_user_json = json_encode($existing_users, JSON_PRETTY_PRINT);
-        file_put_contents($users_file, $add_user_json);
-        
-        $username = $email = $phone = '';
-
-        $success_message = 'You have successfully registered! Please wait a while you get redirected to the login page in <span id="cd">3</span> seconds. Thank you!';
-        $should_redirect = true; 
+        $error_message = 'Passwords do not match';
     } else {
-        $error_message = implode('<br>', $errors);
+        // Use the User class register method
+        $registration_result = User::register($pdo, $username, $email, $password);
+        
+        if ($registration_result['success']) {
+            $success_message = 'You have successfully registered! Please wait while you get redirected to the login page in <span id="cd">3</span> seconds. Thank you!';
+            $should_redirect = true;
+            // Clear form fields
+            $username = $email = '';
+        } else {
+            $error_message = $registration_result['message'];
+        }
     }
 }
 ?>
@@ -129,13 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
                                placeholder="Confirm your password...">
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="phone">Phone Number:</label>
-                    <input type="tel" id="phone" name="phone" 
-                           placeholder="Optional phone number..."
-                           value="<?php echo isset($phone) ? htmlspecialchars($phone) : ''; ?>">
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Create Account</button>

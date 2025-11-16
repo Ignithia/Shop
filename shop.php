@@ -1,116 +1,96 @@
 <?php
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Game.php';
+
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+try {
+    $db = Database::getInstance();
+    $pdo = $db->getConnection();
+} catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// Require user to be logged in
+User::requireLogin();
+
+$currentUser = User::getCurrentUser($pdo);
+if (!$currentUser) {
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
 // Logout functionality
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_destroy();
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
-$username = $_SESSION['username'] ?? 'Unknown';
-
-// Load games from JSON file
-function loadGames() {
-    if (file_exists('data/games.json')) {
-        $games_data = file_get_contents('data/games.json');
-        $games = json_decode($games_data, true);
-        return is_array($games) ? $games : [];
-    }
-    return [];
-}
-
-$games = loadGames();
-
-// Get the coins for each user
-function getUserCoins($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['coins']) ? $user['coins'] : 0;
-                }
-            }
+// Handle the wishlist additions/removals
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wishlist_action'])) {
+    $game_id = intval($_POST['game_id']);
+    
+    if ($_POST['wishlist_action'] === 'add') {
+        // Check if user owns this game - don't add if owned
+        if (!$currentUser->ownsGame($game_id)) {
+            $currentUser->addToWishlist($game_id);
         }
+    } elseif ($_POST['wishlist_action'] === 'remove') {
+        $currentUser->removeFromWishlist($game_id);
     }
-    return 0;
+    
+    // Redirect to same page to prevent form resubmission
+    $redirect_url = $_SERVER['REQUEST_URI'];
+    header("Location: $redirect_url");
+    exit();
 }
 
-$user_coins = getUserCoins($username);
+// Get search query and category from URL parameters
+$search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
+$selected_category = isset($_GET['category']) ? $_GET['category'] : 'all';
 
-function formatCoins($amount) {
-    return number_format($amount, 0, ',', '.');
-}
-
-// Check if user already owns this game
-function userOwnsGame($username, $game_id) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['owned_games']) && in_array($game_id, $user['owned_games']);
-                }
-            }
-        }
-    }
-    return false;
-}
-
-// Get category and search using URL parameters
-$selected_category = $_GET['category'] ?? 'all';
-$search_query = $_GET['search'] ?? '';
-
-// Filter games by category (only if a specific category is selected else show all)
-$filtered_games = $games;
-if ($selected_category !== 'all') {
-    $filtered_games = array_filter($games, function($game) use ($selected_category) {
-        return $game['category'] === $selected_category;
-    });
-}
-
+// Prepare filters for games
+$filters = [];
 if (!empty($search_query)) {
-    $filtered_games = array_filter($filtered_games, function($game) use ($search_query) {
-        $query_lower = strtolower($search_query);
-        $name_match = strpos(strtolower($game['name']), $query_lower) !== false;
-        $description_match = strpos(strtolower($game['description']), $query_lower) !== false;
-        $category_match = strpos(strtolower($game['category']), $query_lower) !== false;
-        return $name_match || $description_match || $category_match;
-    });
+    $filters['search'] = $search_query;
 }
-
-// Load categories from JSON file
-function loadCategories() {
-    if (file_exists('data/categories.json')) {
-        $categories_data = file_get_contents('data/categories.json');
-        $categories_array = json_decode($categories_data, true);
-        if (is_array($categories_array)) {
-            $categories = ['all' => 'All Games'];
-            foreach ($categories_array as $category) {
-                $key = strtolower($category['name']);
-                $categories[$key] = $category['name'];
-            }
-            return $categories;
-        }
+if ($selected_category !== 'all') {
+    // Find category ID by name
+    $stmt = $pdo->prepare("SELECT id FROM category WHERE LOWER(name) = ?");
+    $stmt->execute([strtolower($selected_category)]);
+    $category_id = $stmt->fetchColumn();
+    if ($category_id) {
+        $filters['category'] = $category_id;
     }
 }
 
-$categories = loadCategories();
+// Load games and categories
+$games = Game::getAll($pdo, $filters);
+$categories = Game::getAllCategories($pdo);
+$user_wishlist = $currentUser->getWishlist();
+
+// Create categories array for navigation
+$category_nav = ['all' => 'All Games'];
+foreach ($categories as $category) {
+    $key = strtolower($category['name']);
+    $category_nav[$key] = $category['name'];
+}
+
+// Convert wishlist to array of game IDs for easy checking
+$wishlist_game_ids = array_column($user_wishlist, 'id');
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gaming Store - Shop</title>
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="./css/main.css">
 </head>
 <body>
     <?php include './inc/header.inc.php'; ?>
@@ -144,7 +124,7 @@ $categories = loadCategories();
         </div>
 
         <div class="category-nav">
-            <?php foreach ($categories as $cat_key => $cat_name): ?>
+            <?php foreach ($category_nav as $cat_key => $cat_name): ?>
                 <a href="?category=<?php echo $cat_key; ?>" 
                    class="category-btn <?php echo ($selected_category === $cat_key) ? 'active' : ''; ?>">
                     <?php echo $cat_name; ?>
@@ -153,17 +133,43 @@ $categories = loadCategories();
         </div>
 
         <div class="games-grid">
-            <?php foreach ($filtered_games as $game): ?>
+            <?php foreach ($games as $game): ?>
                 <div class="game-card">
                     <div class="game-image-container">
                         <a href="product.php?id=<?php echo $game['id']; ?>">
-                            <img src="<?php echo $game['image']; ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                            <?php 
+                            $game_obj = new Game($pdo);
+                            $game_obj->loadById($game['id']);
+                            $screenshots = $game_obj->getScreenshots();
+                            $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                            ?>
+                            <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
                         </a>
-                        <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
+                        
+                        <?php if ($game['sale'] && $game['sale_percentage'] > 0): ?>
                             <div class="sale-badge">-<?php echo $game['sale_percentage']; ?>%</div>
                         <?php endif; ?>
-                        <?php if (isset($game['dlcs']) && !empty($game['dlcs'])): ?>
-                            <div class="dlc-indicator">DLC Available</div>
+                        
+                        <?php if (!$currentUser->ownsGame($game['id'])): ?>
+                            <div class="wishlist-overlay">
+                                <?php if (in_array($game['id'], $wishlist_game_ids)): ?>
+                                    <form method="post" style="margin: 0;">
+                                        <input type="hidden" name="wishlist_action" value="remove">
+                                        <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                        <button type="submit" class="wishlist-heart-btn in-wishlist" title="Remove from wishlist">
+                                            💔
+                                        </button>
+                                    </form>
+                                <?php else: ?>
+                                    <form method="post" style="margin: 0;">
+                                        <input type="hidden" name="wishlist_action" value="add">
+                                        <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                        <button type="submit" class="wishlist-heart-btn not-in-wishlist" title="Add to wishlist">
+                                            ❤️
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                     <div class="game-info">
@@ -172,25 +178,32 @@ $categories = loadCategories();
                                 <?php echo htmlspecialchars($game['name']); ?>
                             </a>
                         </h3>
-                        <p class="game-category"><?php echo ucfirst($game['category']); ?></p>
+                        <p class="game-category"><?php echo htmlspecialchars($game['category_name']); ?></p>
                         
                         <div class="game-badges">
-                            <?php if (isset($game['is_new']) && $game['is_new']): ?>
+                            <?php 
+                            $release_date = new DateTime($game['release_date']);
+                            $thirty_days_ago = new DateTime('-30 days');
+                            if ($release_date > $thirty_days_ago): 
+                            ?>
                                 <div class="new-badge-small">NEW</div>
                             <?php endif; ?>
                         </div>
                         
                         <div class="game-pricing">
-                            <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
-                                <span class="original-price">🪙 <?php echo formatCoins($game['original_price']); ?></span>
-                                <span class="sale-price">🪙 <?php echo formatCoins($game['price']); ?></span>
+                            <?php if ($game['sale'] && $game['sale_percentage'] > 0): ?>
+                                <?php 
+                                $original_price = $game['price'] / (1 - ($game['sale_percentage'] / 100));
+                                ?>
+                                <span class="original-price">$<?php echo number_format($original_price, 2); ?></span>
+                                <span class="sale-price">$<?php echo number_format($game['price'], 2); ?></span>
                             <?php else: ?>
-                                <div class="game-price">🪙 <?php echo formatCoins($game['price']); ?></div>
+                                <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
                             <?php endif; ?>
                         </div>
                         
                         <div class="game-actions">
-                            <?php if (userOwnsGame($username, $game['id'])): ?>
+                            <?php if ($currentUser->ownsGame($game['id'])): ?>
                                 <button class="buy-btn owned" disabled>✓ Owned</button>
                             <?php else: ?>
                                 <form method="post" action="cart.php" style="display: inline;">
@@ -198,6 +211,24 @@ $categories = loadCategories();
                                     <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
                                     <button type="submit" class="buy-btn">Add to Cart</button>
                                 </form>
+                                
+                                <?php if (in_array($game['id'], $wishlist_game_ids)): ?>
+                                    <form method="post" action="wishlist.php" style="display: inline;">
+                                        <input type="hidden" name="remove_game" value="1">
+                                        <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                        <button type="submit" class="card-btn wishlist-btn in-wishlist" title="Remove from wishlist">
+                                            💔
+                                        </button>
+                                    </form>
+                                <?php else: ?>
+                                    <form method="post" action="wishlist.php" style="display: inline;">
+                                        <input type="hidden" name="add_to_wishlist" value="1">
+                                        <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                        <button type="submit" class="card-btn wishlist-btn" title="Add to wishlist">
+                                            ❤️
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <a href="product.php?id=<?php echo $game['id']; ?>" class="card-btn secondary">View Details</a>
                         </div>
@@ -207,7 +238,7 @@ $categories = loadCategories();
         </div>
 
             <!-- If no games are found show this message -->
-        <?php if (empty($filtered_games)): ?>
+        <?php if (empty($games)): ?>
             <div class="no-games">
                 <?php if (!empty($search_query)): ?>
                     <h3>🔍 No games found for "<?php echo htmlspecialchars($search_query); ?>"</h3>

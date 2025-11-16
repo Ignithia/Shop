@@ -1,6 +1,11 @@
 <?php
 session_start();
 
+// Include required classes
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Game.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: login.php');
@@ -9,70 +14,48 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 // Logout
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_destroy();
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
-$username = $_SESSION['username'] ?? 'Unknown';
-
-// Counts get checked by using data 
-function getDataCounts($current_username) {
-    $counts = [
-        'users' => 0,
-        'games' => 0,
-        'owned_games' => 0 
-    ];
-    
-    // Count amount of total users and current user's owned games
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            $counts['users'] = count($users_data);
-            
-            // Find current user and count their owned games
-            foreach ($users_data as $user) {
-                if ($user['username'] === $current_username) {
-                    if (isset($user['owned_games']) && is_array($user['owned_games'])) {
-                        $counts['owned_games'] = count($user['owned_games']);
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Count amount of games in the store
-    if (file_exists('data/games.json')) {
-        $games_data = json_decode(file_get_contents('data/games.json'), true);
-        if (is_array($games_data)) {
-            $counts['games'] = count($games_data);
-        }
-    }
-    
-    return $counts;
+// Get database connection
+try {
+    $database = Database::getInstance();
+    $pdo = $database->getConnection();
+} catch (Exception $e) {
+    header('Location: login.php');
+    exit();
 }
 
-$data_counts = getDataCounts($username);
-
-function getUserCoins($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['coins']) ? $user['coins'] : 0;
-                }
-            }
-        }
-    }
-    return 0;
+// Get current user
+$current_user = User::getCurrentUser($pdo);
+if (!$current_user) {
+    header('Location: login.php');
+    exit();
 }
 
-$user_coins = getUserCoins($username);
+$username = $current_user->getUsername();
 
-function formatCoins($amount) {
-    return number_format($amount, 0, ',', '.');
+// Get dashboard statistics
+$data_counts = [
+    'users' => 0,
+    'games' => 0,
+    'owned_games' => count($current_user->getOwnedGames())
+];
+
+// Count total users
+$stmt = $pdo->query("SELECT COUNT(*) FROM users");
+$data_counts['users'] = $stmt->fetchColumn();
+
+// Count total games
+$stmt = $pdo->query("SELECT COUNT(*) FROM game");
+$data_counts['games'] = $stmt->fetchColumn();
+
+$user_balance = $current_user->getBalance();
+
+function formatPrice($amount) {
+    return '$' . number_format($amount, 2);
 }
 ?>
 <!DOCTYPE html>
@@ -124,7 +107,7 @@ function formatCoins($amount) {
             <div class="dashboard-card">
                 <h3>👤 Account</h3>
                 <p>Manage your account settings, profile, and security preferences.</p>
-                <a href="#" class="card-btn secondary">Account Settings</a>
+                <a href="profile.php" class="card-btn secondary">View Profile</a>
             </div>
         </div>
     </div>

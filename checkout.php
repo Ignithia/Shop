@@ -1,127 +1,67 @@
 <?php
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Game.php';
+
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+try {
+    $db = Database::getInstance();
+    $pdo = $db->getConnection();
+} catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// Require user to be logged in
+User::requireLogin();
+
+$currentUser = User::getCurrentUser($pdo);
+if (!$currentUser) {
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
 // Logout functionality
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_destroy();
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
-$username = $_SESSION['username'] ?? 'Unknown';
-
-// Load games from JSON file
-function loadGames() {
-    if (file_exists('data/games.json')) {
-        $games_data = file_get_contents('data/games.json');
-        $games = json_decode($games_data, true);
-        return is_array($games) ? $games : [];
-    }
-    return [];
-}
-
-// Find game by ID
-function findGameById($games, $id) {
-    foreach ($games as $game) {
-        if ($game['id'] == $id) {
-            return $game;
-        }
-    }
-    return null;
-}
-
-// Get the coins for each user
-function getUserCoins($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['coins']) ? $user['coins'] : 0;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-// Check if user already owns this game
-function userOwnsGame($username, $game_id) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['owned_games']) && in_array($game_id, $user['owned_games']);
-                }
-            }
-        }
-    }
-    return false;
-}
-
-$games = loadGames();
-$cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
-$user_coins = getUserCoins($username);
-
-function formatCoins($amount) {
-    return number_format($amount, 0, ',', '.');
-}
-
-// Calculate cart totals
-$cart_items = [];
+// Get cart items and calculate totals
+$cart_items = $currentUser->getShoppingCart();
 $total_price = 0;
 
-foreach ($cart as $game_id) {
-    $game = findGameById($games, $game_id);
-    if ($game && !userOwnsGame($username, $game_id)) {
-        $cart_items[] = $game;
-        $total_price += $game['price'];
-    }
+foreach ($cart_items as $game) {
+    $total_price += $game['price'];
 }
 
 // Handle purchase
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'purchase') {
-    if ($user_coins >= $total_price && !empty($cart_items)) {
-        // Process purchase
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        
-        for ($i = 0; $i < count($users_data); $i++) {
-            if ($users_data[$i]['username'] === $username) {
-                // Deduct coins
-                $users_data[$i]['coins'] = $user_coins - $total_price;
-                
-                // Add games to owned_games
-                if (!isset($users_data[$i]['owned_games'])) {
-                    $users_data[$i]['owned_games'] = [];
-                }
-                
-                foreach ($cart_items as $game) {
-                    if (!in_array($game['id'], $users_data[$i]['owned_games'])) {
-                        $users_data[$i]['owned_games'][] = $game['id'];
-                    }
-                }
-                break;
+    if ($currentUser->getBalance() >= $total_price && !empty($cart_items)) {
+        try {
+            $pdo->beginTransaction();
+            
+            // Process each game purchase
+            foreach ($cart_items as $game) {
+                $currentUser->purchaseGame($game['id'], $game['price']);
             }
+            
+            // Clear cart after successful purchase
+            $currentUser->clearCart();
+            
+            $pdo->commit();
+            
+            // Redirect to success page
+            header('Location: checkout.php?success=1');
+            exit();
+        } catch (Exception $e) {
+            $pdo->rollback();
+            $error_message = 'Purchase failed. Please try again.';
         }
-        
-        // Save updated user data
-        file_put_contents('data/users.json', json_encode($users_data, JSON_PRETTY_PRINT));
-        
-        // Clear cart
-        $_SESSION['cart'] = [];
-        
-        // Redirect to success page
-        header('Location: checkout.php?success=1');
-        exit();
     } else {
-        $error_message = $user_coins < $total_price ? 'Insufficient coins!' : 'Cart is empty!';
+        $error_message = $currentUser->getBalance() < $total_price ? 'Insufficient balance!' : 'Cart is empty!';
     }
 }
 
@@ -167,13 +107,19 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                         <div class="order-items">
                             <?php foreach ($cart_items as $game): ?>
                                 <div class="order-item">
-                                    <img src="<?php echo htmlspecialchars($game['image']); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="item-image">
+                                    <?php 
+                                    $game_obj = new Game($pdo);
+                                    $game_obj->loadById($game['id']);
+                                    $screenshots = $game_obj->getScreenshots();
+                                    $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                                    ?>
+                                    <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="item-image">
                                     <div class="item-info">
                                         <h4><?php echo htmlspecialchars($game['name']); ?></h4>
-                                        <p><?php echo ucfirst($game['category']); ?></p>
+                                        <p><?php echo htmlspecialchars($game['category_name'] ?? 'Unknown'); ?></p>
                                     </div>
                                     <div class="item-price">
-                                        🪙 <?php echo formatCoins($game['price']); ?>
+                                        $<?php echo number_format($game['price'], 2); ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -182,11 +128,11 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                         <div class="order-total">
                             <div class="total-line">
                                 <span>Subtotal:</span>
-                                <span>🪙 <?php echo formatCoins($total_price); ?></span>
+                                <span>$<?php echo number_format($total_price, 2); ?></span>
                             </div>
                             <div class="total-line final">
                                 <span>Total:</span>
-                                <span>🪙 <?php echo formatCoins($total_price); ?></span>
+                                <span>$<?php echo number_format($total_price, 2); ?></span>
                             </div>
                         </div>
                     </div>
@@ -195,17 +141,17 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                         <h3>Payment</h3>
                         <div class="wallet-info">
                             <div class="wallet-balance">
-                                <span>Your Coin Balance:</span>
-                                <span class="balance-amount">🪙 <?php echo formatCoins($user_coins); ?></span>
+                                <span>Your Balance:</span>
+                                <span class="balance-amount">$<?php echo number_format($currentUser->getBalance(), 2); ?></span>
                             </div>
                             
-                            <?php if ($user_coins >= $total_price): ?>
+                            <?php if ($currentUser->getBalance() >= $total_price): ?>
                                 <div class="balance-status sufficient">
                                     ✅ Sufficient balance
                                 </div>
                             <?php else: ?>
                                 <div class="balance-status insufficient">
-                                    ❌ Insufficient balance (Need 🪙 <?php echo formatCoins($total_price - $user_coins); ?> more)
+                                    ❌ Insufficient balance (Need $<?php echo number_format($total_price - $currentUser->getBalance(), 2); ?> more)
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -220,16 +166,16 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                             <input type="hidden" name="action" value="purchase">
                             
                             <div class="checkout-actions">
-                                <?php if ($user_coins >= $total_price): ?>
+                                <?php if ($currentUser->getBalance() >= $total_price): ?>
                                     <button type="submit" class="btn btn-primary checkout-btn">
-                                        Complete Purchase (🪙 <?php echo formatCoins($total_price); ?>)
+                                        Complete Purchase ($<?php echo number_format($total_price, 2); ?>)
                                     </button>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-disabled" disabled>
-                                        Insufficient Coins
+                                        Insufficient Balance
                                     </button>
-                                    <a href="#" class="btn btn-secondary" onclick="alert('Coin top-up feature coming soon!')">
-                                        Add Coins
+                                    <a href="#" class="btn btn-secondary" onclick="alert('Balance top-up feature coming soon!')">
+                                        Add Funds
                                     </a>
                                 <?php endif; ?>
                                 

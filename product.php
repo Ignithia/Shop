@@ -1,97 +1,52 @@
 <?php
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Game.php';
+
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+try {
+    $db = Database::getInstance();
+    $pdo = $db->getConnection();
+} catch (Exception $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// Require user to be logged in
+User::requireLogin();
+
+$currentUser = User::getCurrentUser($pdo);
+if (!$currentUser) {
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
 // Logout functionality
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_destroy();
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
-$username = $_SESSION['username'] ?? 'Unknown';
-
 // Get game ID from URL parameter
 $game_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Load games from JSON file
-function loadGames() {
-    if (file_exists('data/games.json')) {
-        $games_data = file_get_contents('data/games.json');
-        $games = json_decode($games_data, true);
-        return is_array($games) ? $games : [];
-    }
-    return [];
-}
-
-// Find specific game by ID
-function findGameById($games, $id) {
-    foreach ($games as $game) {
-        if ($game['id'] == $id) {
-            return $game;
-        }
-    }
-    return null;
-}
-
-// Check if user already owns this game
-function userOwnsGame($username, $game_id) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['owned_games']) && in_array($game_id, $user['owned_games']);
-                }
-            }
-        }
-    }
-    return false;
-}
-
-$games = loadGames();
-$game = findGameById($games, $game_id);
-
-// If game not found, redirect to shop
-if (!$game) {
+// Load specific game
+$game = new Game($pdo);
+if (!$game->loadById($game_id)) {
     header('Location: shop.php');
     exit();
 }
 
-$user_owns_game = userOwnsGame($username, $game_id);
-
-// Get the coins for each user
-function getUserCoins($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['coins']) ? $user['coins'] : 0;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-$user_coins = getUserCoins($username);
-
-function formatCoins($amount) {
-    return number_format($amount, 0, ',', '.');
-}
+$user_owns_game = $currentUser->ownsGame($game_id);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($game['name']); ?> - Gaming Store</title>
+    <title><?php echo htmlspecialchars($game->getName()); ?> - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -101,30 +56,33 @@ function formatCoins($amount) {
         <div class="product-page">
             <div class="product-header">
                 <div class="product-image">
-                    <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
-                        <div class="sale-badge">-<?php echo $game['sale_percentage']; ?>%</div>
+                    <?php if ($game->isOnSale()): ?>
+                        <div class="sale-badge">-<?php echo $game->getSalePercentage(); ?>%</div>
                     <?php endif; ?>
-                    <img src="<?php echo htmlspecialchars($game['image']); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>">
+                    <?php 
+                    $screenshots = $game->getScreenshots();
+                    $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                    ?>
+                    <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game->getName()); ?>">
                 </div>
                 <div class="product-info">
-                    <h1 class="product-title"><?php echo htmlspecialchars($game['name']); ?></h1>
-                    <p class="product-category"><?php echo ucfirst(htmlspecialchars($game['category'])); ?></p>
+                    <h1 class="product-title"><?php echo htmlspecialchars($game->getName()); ?></h1>
+                    <p class="product-category"><?php echo htmlspecialchars($game->getCategoryName()); ?></p>
                     
-                    <?php if (isset($game['is_new']) && $game['is_new']): ?>
+                    <?php if ($game->isNew()): ?>
                         <div class="new-badge">NEW</div>
                     <?php endif; ?>
                     
-                    <p class="product-description"><?php echo htmlspecialchars($game['description']); ?></p>
-                    
+                    <p class="product-description"><?php echo htmlspecialchars($game->getDescription()); ?></p>
                     
                     <div class="product-pricing">
-                        <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
+                        <?php if ($game->isOnSale() && $game->getSalePercentage() > 0): ?>
                             <div class="price-container">
-                                <span class="original-price">🪙 <?php echo formatCoins($game['original_price']); ?></span>
-                                <span class="sale-price">🪙 <?php echo formatCoins($game['price']); ?></span>
+                                <span class="original-price"><?php echo $game->getFormattedOriginalPrice(); ?></span>
+                                <span class="sale-price"><?php echo $game->getFormattedPrice(); ?></span>
                             </div>
                         <?php else: ?>
-                            <div class="product-price">🪙 <?php echo formatCoins($game['price']); ?></div>
+                            <div class="product-price"><?php echo $game->getFormattedPrice(); ?></div>
                         <?php endif; ?>
                     </div>
                     
@@ -135,7 +93,7 @@ function formatCoins($amount) {
                         <?php else: ?>
                             <form method="post" action="cart.php" style="display: inline;">
                                 <input type="hidden" name="action" value="add">
-                                <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
+                                <input type="hidden" name="game_id" value="<?php echo $game->getId(); ?>">
                                 <button type="submit" class="btn btn-primary">Add to Cart</button>
                             </form>
                             <a href="checkout.php" class="btn card-btn">Buy Now</a>
@@ -148,62 +106,41 @@ function formatCoins($amount) {
                 <h3>Game Details</h3>
                 <div class="details-grid">
                     <div class="detail-item">
-                        <strong>Category:</strong> <?php echo ucfirst(htmlspecialchars($game['category'])); ?>
+                        <strong>Category:</strong> <?php echo htmlspecialchars($game->getCategoryName()); ?>
                     </div>
                     <div class="detail-item">
-                        <strong>Price:</strong> 🪙 <?php echo formatCoins($game['price']); ?>
+                        <strong>Price:</strong> <?php echo $game->getFormattedPrice(); ?>
                     </div>
-                    <?php if (isset($game['is_on_sale']) && $game['is_on_sale']): ?>
                     <div class="detail-item">
-                        <strong>Sale:</strong> <?php echo $game['sale_percentage']; ?>% OFF
+                        <strong>Release Date:</strong> <?php echo date('F j, Y', strtotime($game->getReleaseDate())); ?>
+                    </div>
+                    <?php if ($game->isOnSale() && $game->getSalePercentage() > 0): ?>
+                    <div class="detail-item">
+                        <strong>Sale:</strong> <?php echo $game->getSalePercentage(); ?>% OFF
                     </div>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <!-- DLC Section -->
-            <?php if (isset($game['dlcs']) && !empty($game['dlcs'])): ?>
-            <div class="dlc-section">
-                <h3>DLC's</h3>
-                <div class="dlc-grid">
-                    <?php foreach ($game['dlcs'] as $dlc): ?>
-                        <div class="dlc-card">
-                            <div class="dlc-info">
-                                <h4 class="dlc-title"><?php echo htmlspecialchars($dlc['name']); ?></h4>
-                                <p class="dlc-description"><?php echo htmlspecialchars($dlc['description']); ?></p>
-                                <div class="dlc-price">
-                                    <?php if ($dlc['price'] == 0): ?>
-                                        <span class="free-dlc">FREE</span>
-                                    <?php else: ?>
-                                        🪙 <?php echo formatCoins($dlc['price']); ?>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="dlc-actions">
-                                <?php if ($dlc['price'] == 0): ?>
-                                    <button class="btn card-btn">Download Free</button>
-                                <?php else: ?>
-                                    <button class="btn card-btn">Add DLC to Cart</button>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            <?php endif; ?>
-
             <div class="related-games">
-                <h3>More <?php echo ucfirst(htmlspecialchars($game['category'])); ?> Games</h3>
+                <h3>More <?php echo htmlspecialchars($game->getCategoryName()); ?> Games</h3>
                 <div class="games-grid">
                     <?php 
-                    $related_games = array_filter($games, function($g) use ($game) {
-                        return $g['category'] === $game['category'] && $g['id'] !== $game['id'];
+                    $related_games = Game::getByCategory($pdo, $game->getCategoryId());
+                    $related_games = array_filter($related_games, function($g) use ($game_id) {
+                        return $g['id'] !== $game_id;
                     });
                     $related_games = array_slice($related_games, 0, 3); // Show only 3 related games
                     ?>
                     <?php foreach ($related_games as $related_game): ?>
                         <div class="game-card">
-                            <img src="<?php echo htmlspecialchars($related_game['image']); ?>" alt="<?php echo htmlspecialchars($related_game['name']); ?>" class="game-image">
+                            <?php 
+                            $related_game_obj = new Game($pdo);
+                            $related_game_obj->loadById($related_game['id']);
+                            $related_screenshots = $related_game_obj->getScreenshots();
+                            $related_image_url = !empty($related_screenshots) ? $related_screenshots[0] : './media/default-game.jpg';
+                            ?>
+                            <img src="<?php echo htmlspecialchars($related_image_url); ?>" alt="<?php echo htmlspecialchars($related_game['name']); ?>" class="game-image">
                             <div class="game-info">
                                 <h4 class="game-title"><?php echo htmlspecialchars($related_game['name']); ?></h4>
                                 <div class="game-price">$<?php echo number_format($related_game['price'], 2); ?></div>

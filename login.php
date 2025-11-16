@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+// Include required classes
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+
 // If user is already logged in, redirect to index.php
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header('Location: index.php');
@@ -9,40 +13,25 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 
 $error_message = '';
 
-// Mock user database
-$users_file = 'data/users.json';
-if(file_exists($users_file)){
-    $users = json_decode(file_get_contents($users_file),true);
-} else {
-    $users = [
-        [
-            'username' => 'test',
-            'email' => 'test@shop.com',
-            'password' => 'test123'
-        ]
-    ];
+// Get database connection
+try {
+    $database = Database::getInstance();
+    $pdo = $database->getConnection();
+} catch (Exception $e) {
+    $error_message = 'Database connection failed. Please try again later.';
 }
 
 // Process login form
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     $login_input = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $remember_me = isset($_POST['remember_me']);
     
-    $user_found = null;
+    $login_result = User::login($pdo, $login_input, $password);
     
-    // Check login credentials
-    foreach ($users as $user) {
-        if (($user['email'] === $login_input || $user['username'] === $login_input) && $user['password'] === $password) {
-            $user_found = $user;
-            break;
-        }
-    }
-    
-    if ($user_found) {
-        $_SESSION['logged_in'] = true;
-        $_SESSION['user_email'] = $user_found['email'];
-        $_SESSION['username'] = $user_found['username'];
+    if ($login_result['success']) {
+        // Start session for the user
+        User::startSession($login_result['user']);
         
         // Handle Remember Me functionality
         if ($remember_me) {
@@ -53,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: index.php');
         exit();
     } else {
-        $error_message = 'Incorrect email/username or password. Please try again.';
+        $error_message = $login_result['message'];
     }
 }
 
@@ -108,8 +97,8 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
             
             <div class="demo-credentials">
                 <strong>Demo Login:</strong><br>
-                Email: test@shop.com OR Username: test<br>
-                Password: test123
+                Create an account or login with existing credentials<br>
+                All accounts use secure password hashing
             </div>
         </div>
     </div>

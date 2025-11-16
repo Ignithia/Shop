@@ -1,6 +1,11 @@
 <?php
 session_start();
 
+// Include required classes
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Game.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: login.php');
@@ -9,120 +14,73 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 // Logout functionality
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_destroy();
+    User::logout();
     header('Location: login.php');
     exit();
 }
 
-$username = $_SESSION['username'] ?? 'Unknown';
-
-// Load games from JSON file
-function loadGames() {
-    if (file_exists('data/games.json')) {
-        $games_data = file_get_contents('data/games.json');
-        $games = json_decode($games_data, true);
-        return is_array($games) ? $games : [];
-    }
-    return [];
+// Get database connection
+try {
+    $database = Database::getInstance();
+    $pdo = $database->getConnection();
+} catch (Exception $e) {
+    header('Location: login.php');
+    exit();
 }
 
-function getUserOwnedGames($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['owned_games']) ? $user['owned_games'] : [];
-                }
-            }
-        }
-    }
-    return [];
+// Get current user
+$current_user = User::getCurrentUser($pdo);
+if (!$current_user) {
+    header('Location: login.php');
+    exit();
 }
 
-function findGameById($games, $id) {
-    foreach ($games as $game) {
-        if ($game['id'] == $id) {
-            return $game;
-        }
-    }
-    return null;
-}
+$username = $current_user->getUsername();
 
-$games = loadGames();
-$owned_game_ids = getUserOwnedGames($username);
-$owned_games = [];
-
-foreach ($owned_game_ids as $game_id) {
-    $game = findGameById($games, $game_id);
-    if ($game) {
-        $owned_games[] = $game;
-    }
-}
+// Get user's owned games from database
+$owned_games = $current_user->getOwnedGames();
 
 $selected_category = $_GET['category'] ?? 'all';
 $search_query = $_GET['search'] ?? '';
 
 $filtered_owned_games = $owned_games;
 
-// Get the coins for each user
-function getUserCoins($username) {
-    if (file_exists('data/users.json')) {
-        $users_data = json_decode(file_get_contents('data/users.json'), true);
-        if (is_array($users_data)) {
-            foreach ($users_data as $user) {
-                if ($user['username'] === $username) {
-                    return isset($user['coins']) ? $user['coins'] : 0;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-$user_coins = getUserCoins($username);
-
-function formatCoins($amount) {
-    return number_format($amount, 0, ',', '.');
-}
 if ($selected_category !== 'all') {
     $filtered_owned_games = array_filter($owned_games, function($game) use ($selected_category) {
-        return $game['category'] === $selected_category;
+        return strtolower($game['category_name'] ?? '') === strtolower($selected_category);
     });
 }
 
 if (!empty($search_query)) {
     $filtered_owned_games = array_filter($filtered_owned_games, function($game) use ($search_query) {
         $query_lower = strtolower($search_query);
-        $name_match = strpos(strtolower($game['name']), $query_lower) !== false;
-        $description_match = strpos(strtolower($game['description']), $query_lower) !== false;
-        $category_match = strpos(strtolower($game['category']), $query_lower) !== false;
+        $name_match = strpos(strtolower($game['name'] ?? ''), $query_lower) !== false;
+        $description_match = strpos(strtolower($game['description'] ?? ''), $query_lower) !== false;
+        $category_match = strpos(strtolower($game['category_name'] ?? ''), $query_lower) !== false;
         return $name_match || $description_match || $category_match;
     });
 }
 
 $games_by_category = [];
 foreach ($filtered_owned_games as $game) {
-    $games_by_category[$game['category']][] = $game;
+    $category = $game['category_name'] ?? 'Unknown';
+    $games_by_category[$category][] = $game;
 }
 
-// Load categories from JSON file
-function loadCategories() {
-    if (file_exists('data/categories.json')) {
-        $categories_data = file_get_contents('data/categories.json');
-        $categories_array = json_decode($categories_data, true);
-        if (is_array($categories_array)) {
-            $categories = ['all' => 'All Games'];
-            foreach ($categories_array as $category) {
-                $key = strtolower($category['name']);
-                $categories[$key] = $category['name'];
-            }
-            return $categories;
-        }
-    }
+// Get user balance
+$user_balance = $current_user->getBalance();
+
+function formatPrice($amount) {
+    return '$' . number_format($amount, 2);
 }
 
-$categories = loadCategories();
+// Load categories from database
+$categories_data = Game::getAllCategories($pdo);
+$categories = ['all' => 'All Games'];
+foreach ($categories_data as $category) {
+    $key = strtolower($category['name']);
+    $categories[$key] = $category['name'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -198,7 +156,7 @@ $categories = loadCategories();
                         <div class="stat-label">Categories</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">🪙 <?php echo formatCoins(array_sum(array_column($filtered_owned_games, 'price'))); ?></div>
+                        <div class="stat-number"><?php echo formatPrice(array_sum(array_column($filtered_owned_games, 'price'))); ?></div>
                         <div class="stat-label">Total Value</div>
                     </div>
                 </div>
@@ -211,7 +169,7 @@ $categories = loadCategories();
                                 <?php foreach ($category_games as $game): ?>
                                     <div class="game-card library-card">
                                         <a href="product.php?id=<?php echo $game['id']; ?>">
-                                            <img src="<?php echo htmlspecialchars($game['image']); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                                            <img src="media/game_<?php echo $game['id']; ?>.jpg" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image" onerror="this.src='media/placeholder.jpg'">
                                         </a>
                                         <div class="game-info">
                                             <h4 class="game-title">
@@ -219,8 +177,8 @@ $categories = loadCategories();
                                                     <?php echo htmlspecialchars($game['name']); ?>
                                                 </a>
                                             </h4>
-                                            <p class="game-category"><?php echo ucfirst(htmlspecialchars($game['category'])); ?></p>
-                                            <div class="game-price">🪙 <?php echo formatCoins($game['price']); ?></div>
+                                            <p class="game-category"><?php echo ucfirst(htmlspecialchars($game['category_name'] ?? 'Unknown')); ?></p>
+                                            <div class="game-price"><?php echo formatPrice($game['price']); ?></div>
                                         </div>
                                         <div class="owned-badge">✓ OWNED</div>
                                     </div>

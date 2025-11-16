@@ -2,6 +2,7 @@
 $cur_url = basename($_SERVER['SCRIPT_NAME']);
 
 $nav_items = [
+    'profile.php' => 'Profile',
     'settings.php' => 'Settings',
     'wallet.php' => 'Wallet',
     'purchases.php' => 'Purchase History'
