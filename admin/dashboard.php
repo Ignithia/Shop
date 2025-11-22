@@ -129,7 +129,7 @@ $pageTitle = 'Admin Dashboard';
                     <a href="categories.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-tags"></i> Categories
                     </a>
-                    <a href="settings.php" class="list-group-item list-group-item-action">
+                    <a href="../settings.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                     <div class="dropdown-divider"></div>

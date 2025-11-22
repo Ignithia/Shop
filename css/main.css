@@ -3350,103 +3350,14 @@ body::before {
   margin-top: 2rem;
 }
 
-.profile-content {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 2rem;
-  align-items: start;
-}
-
-.profile-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.profile-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.tab-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.tab-nav a,
-.tab-nav button {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  padding: 0.65rem 1rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
-  letter-spacing: 0.5px;
-  transition: all 0.25s ease;
-  position: relative;
-}
-
-.tab-nav a:hover,
-.tab-nav button:hover {
-  color: var(--accent-blue);
-  background: rgba(102, 192, 244, 0.12);
-  transform: translateY(-2px);
-}
-
-.tab-nav a.active,
-.tab-nav button.active {
-  background: rgba(102, 192, 244, 0.18);
-  color: var(--accent-blue);
-  border-color: rgba(102, 192, 244, 0.5);
-  box-shadow: 0 0 12px rgba(102, 192, 244, 0.3);
-}
-
-.tab-content {
+/* User Profile Card */
+.user-profile-card {
   background: var(--bg-card);
+  border-radius: 20px;
+  padding: 2rem;
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.75rem 2rem;
   box-shadow: var(--card-shadow);
-  animation: fadeInDown 0.35s ease;
-}
-
-/* Compact statistic badges inside profile tabs */
-.profile-stat-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 1rem 0 1.5rem;
-}
-
-.profile-stat-badge {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 0.55rem 0.9rem;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.profile-stat-badge.good {
-  color: var(--accent-green);
-  border-color: rgba(74, 222, 128, 0.4);
-}
-.profile-stat-badge.warn {
-  color: var(--accent-orange);
-  border-color: rgba(249, 115, 22, 0.5);
-}
-.profile-stat-badge.bad {
-  color: var(--accent-red);
-  border-color: rgba(239, 68, 68, 0.5);
+  text-align: center;
 }
 
 /* Admin dashboard & panels */
@@ -4755,115 +4666,6 @@ table.admin-table .cell-actions .btn {
   letter-spacing: 0.5px;
 }
 
-/* Profile Page Layout */
-.profile-content {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.profile-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.profile-main {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 2rem;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--card-shadow);
-}
-
-/* Tab Navigation */
-.tab-nav {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 1rem;
-  position: relative;
-}
-
-.tab-nav::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-  width: 0;
-  transition: width 0.3s ease;
-}
-
-.tab-nav:hover::after {
-  width: 100%;
-}
-
-.tab-btn {
-  background: transparent;
-  border: none;
-  padding: 0.8rem 1.5rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.tab-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(102, 192, 244, 0.1),
-    transparent
-  );
-  transition: left 0.6s ease;
-}
-
-.tab-btn:hover::before {
-  left: 100%;
-}
-
-.tab-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  box-shadow: var(--glow-blue);
-  transform: translateY(-2px);
-}
-
-.tab-btn.active {
-  background: linear-gradient(
-    135deg,
-    var(--accent-blue) 0%,
-    var(--accent-purple) 100%
-  );
-  color: white;
-  box-shadow: var(--glow-blue);
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
 /* Stats Overview */
 .stats-overview {
   margin-bottom: 2rem;
@@ -5316,14 +5118,30 @@ table.admin-table .cell-actions .btn {
   left: 100%;
 }
 
+/* Profile Page Layout */
+.profile-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 /* Main Content */
 .profile-main {
   background: var(--bg-card);
   border-radius: 20px;
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
-  overflow: hidden;
+  overflow: visible;
   min-height: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-tabs {
@@ -5400,13 +5218,66 @@ table.admin-table .cell-actions .btn {
 
 .tab-content {
   padding: 2.5rem;
-  display: none;
   flex: 1;
   background: var(--bg-primary);
+  min-height: 400px;
+  overflow: visible;
 }
 
-.tab-content.active {
+.tab-pane {
+  display: none;
+  min-height: 200px;
+  color: var(--text-primary);
+}
+
+.tab-pane.active {
   display: block;
+  background: rgba(102, 192, 244, 0.05);
+  border: 2px solid rgba(102, 192, 244, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.tab-pane h3 {
+  color: var(--accent-blue);
+  font-family: var(--font-gaming);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.profile-stat-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.profile-stat-badge {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.profile-stat-badge.good {
+  color: var(--accent-green);
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+.profile-stat-badge.warn {
+  color: var(--accent-orange);
+  border-color: rgba(249, 115, 22, 0.5);
+}
+
+.profile-stat-badge.bad {
+  color: var(--accent-red);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Overview Section */

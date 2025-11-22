@@ -93,25 +93,25 @@
 
 		            <div class="profile-main">
 		                <div class="tab-nav">
-		                    <a href="profile.php?tab=overview" class="<?= $selected_tab==='overview'?'active':'' ?>">Overview</a>
-		                    <a href="profile.php?tab=library" class="<?= $selected_tab==='library'?'active':'' ?>">Library</a>
-		                    <a href="profile.php?tab=wishlist" class="<?= $selected_tab==='wishlist'?'active':'' ?>">Wishlist</a>
-		                    <a href="profile.php?tab=settings" class="<?= $selected_tab==='settings'?'active':'' ?>">Settings</a>
+		                    <button class="tab-btn" data-tab="overview">Overview</button>
+		                    <button class="tab-btn" data-tab="library">Library</button>
+		                    <button class="tab-btn" data-tab="wishlist">Wishlist</button>
+		                    <button class="tab-btn" data-tab="settings">Settings</button>
 		                </div>
 
-						<div class="tab-content">
-							<div id="tab-overview" class="tab-pane" style="<?= $selected_tab==='overview' ? '' : 'display:none;' ?>">
-								<h3>Overview</h3>
+				<div class="tab-content">
+					<div id="tab-overview" class="tab-pane">
+						<h3>Overview</h3>
 								<div class="profile-stat-badges">
 									<div class="profile-stat-badge good"><i class="fas fa-gamepad"></i> Games: <?= count($owned_games) ?></div>
 									<div class="profile-stat-badge warn"><i class="fas fa-heart"></i> Wishlist: <?= count($wishlist_games) ?></div>
 									<div class="profile-stat-badge bad"><i class="fas fa-wallet"></i> Balance: <?= $current_user->getFormattedBalanceCoins() ?></div>
 								</div>
 								<p>Welcome back, <?= esc($username) ?>. Use the tabs above to explore your games and customize preferences.</p>
-							</div>
+						</div>
 
-							<div id="tab-library" class="tab-pane" style="<?= $selected_tab==='library' ? '' : 'display:none;' ?>">
-								<h3>Your Library</h3>
+						<div id="tab-library" class="tab-pane">
+							<h3>Your Library</h3>
 								<?php if (empty($owned_games)): ?>
 									<p>You do not own any games yet. Visit the <a href="shop.php">Shop</a>.</p>
 								<?php else: ?>
@@ -130,10 +130,10 @@
 										<?php endforeach; ?>
 									</div>
 								<?php endif; ?>
-							</div>
+						</div>
 
-							<div id="tab-wishlist" class="tab-pane" style="<?= $selected_tab==='wishlist' ? '' : 'display:none;' ?>">
-								<h3>Your Wishlist</h3>
+						<div id="tab-wishlist" class="tab-pane">
+							<h3>Your Wishlist</h3>
 								<?php if (empty($wishlist_games)): ?>
 									<p>Wishlist empty. Browse the <a href="shop.php">Shop</a> to add games.</p>
 								<?php else: ?>
@@ -152,22 +152,15 @@
 										<?php endforeach; ?>
 									</div>
 								<?php endif; ?>
-							</div>
+						</div>
 
-							<div id="tab-settings" class="tab-pane" style="<?= $selected_tab==='settings' ? '' : 'display:none;' ?>">
-								<h3>Account Settings</h3>
-								
+						<div id="tab-settings" class="tab-pane">
+							<h3>Account Settings</h3>
 								<div class="setting-card">
 									<h4><i class="fas fa-key"></i> Change Password</h4>
 									<p>Update your password to keep your account secure.</p>
 									<a href="settings.php#privacy" class="btn btn-primary">Change Password</a>
-								</div>
-								
-								<div class="setting-card">
-									<h4><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h4>
-									<p>Add an extra layer of security to your account.</p>
-									<button class="btn btn-secondary" onclick="alert('2FA setup coming soon!')">Setup 2FA</button>
-								</div>
+								</div
 								
 								<div class="setting-card">
 									<h4><i class="fas fa-cog"></i> More Settings</h4>
@@ -183,53 +176,48 @@
 
 <?php include 'inc/footer.inc.php'; ?>
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-	const links = document.querySelectorAll('.tab-nav a');
-	const panes = {
-		overview: document.getElementById('tab-overview'),
-		library: document.getElementById('tab-library'),
-		wishlist: document.getElementById('tab-wishlist'),
-		settings: document.getElementById('tab-settings')
-	};
-	
-	function showTab(tabName) {
-		// Hide all panes
-		Object.keys(panes).forEach(k => {
-			if (panes[k]) {
-				panes[k].style.display = 'none';
-			}
-		});
-		
-		if (panes[tabName]) {
-			panes[tabName].style.display = 'block';
-		}
-		
-		links.forEach(l => l.classList.remove('active'));
-		const activeLink = document.querySelector('.tab-nav a[href*="tab=' + tabName + '"]');
-		if (activeLink) {
-			activeLink.classList.add('active');
-		}
-	}
-	
-	links.forEach(link => {
-		link.addEventListener('click', function(e){
-			e.preventDefault();
-			const url = new URL(this.href, window.location.origin);
-			const tab = url.searchParams.get('tab') || 'overview';
-			showTab(tab);
-			history.pushState({tab: tab}, '', 'profile.php?tab=' + tab);
-		});
-	});
-	
-	window.addEventListener('popstate', function(e) {
-		const urlParams = new URLSearchParams(window.location.search);
-		const tab = urlParams.get('tab') || 'overview';
-		showTab(tab);
-	});
-	
-	const urlParams = new URLSearchParams(window.location.search);
-	const initialTab = urlParams.get('tab') || 'overview';
-	showTab(initialTab);
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    console.log('Buttons found:', tabButtons.length);
+    console.log('Panes found:', tabPanes.length);
+    
+    function showTab(tabName) {
+        console.log('Switching to tab:', tabName);
+        
+        tabPanes.forEach(pane => {
+            pane.classList.remove('active');
+            console.log('Removed active from:', pane.id);
+        });
+        
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const selectedPane = document.getElementById('tab-' + tabName);
+        console.log('Selected pane:', selectedPane);
+        if (selectedPane) {
+            selectedPane.classList.add('active');
+            console.log('Added active to:', selectedPane.id);
+            console.log('Pane classes:', selectedPane.className);
+            console.log('Computed display:', window.getComputedStyle(selectedPane).display);
+        }
+        
+        const selectedBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+        if (selectedBtn) {
+            selectedBtn.classList.add('active');
+        }
+    }
+    
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            showTab(tabName);
+        });
+    });
+    
+    showTab('overview');
 });
 </script>
 </body>
