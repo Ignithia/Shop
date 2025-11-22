@@ -118,6 +118,7 @@ function formatPrice($amount) {
                     <a href="admin/dashboard.php" class="card-btn">Dashboard</a>
                     <a href="admin/users.php" class="card-btn secondary">Users</a>
                     <a href="admin/games.php" class="card-btn secondary">Games</a>
+                    <a href="admin/categories.php" class="card-btn secondary">Categories</a>
                 </div>
             </div>
             <?php endif; ?>

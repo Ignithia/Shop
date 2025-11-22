@@ -31,6 +31,10 @@ $__href = function($path) use ($__in_admin) {
                     <a href="<?php echo $page; ?>" class="<?php echo $active; ?>"><?php echo $title; ?></a>
                 <?php endforeach;?>
 
+                    <?php if (isset($_SESSION['admin']) && $_SESSION['admin']): ?>
+                        <a href="<?php echo $__href('admin/dashboard.php'); ?>" class="admin-nav-link">Admin Dashboard</a>
+                    <?php endif; ?>
+
                     <a href="?logout=1" class="logout">🚪 Logout</a>
                 </div>
         </div>

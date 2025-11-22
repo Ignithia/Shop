@@ -5085,8 +5085,9 @@ table.admin-table .cell-actions .btn {
   text-decoration: none;
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-  font-weight: 500;
+  border: 1px solid var(--accent-orange);
+  font-weight: 600;
+  font-size: 0.95rem;
   position: relative;
   overflow: hidden;
 }

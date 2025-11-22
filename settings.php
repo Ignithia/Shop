@@ -341,11 +341,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                     </form>
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#setup2FAModal">
-                                    <i class="fas fa-shield-alt"></i> Setup 2FA
-                                </button>
-                            </div>
                         </div>
                         
                         <button type="submit" name="update_privacy" class="btn btn-primary">Save Privacy Settings</button>

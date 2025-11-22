@@ -86,6 +86,7 @@
 		                            <a href="admin/dashboard.php" class="admin-link">Dashboard</a>
 		                            <a href="admin/users.php" class="admin-link">Users</a>
 		                            <a href="admin/games.php" class="admin-link">Games</a>
+								    <a href="admin/categories.php" class="admin-link">Categories</a>
 		                        </div>
 		                    </div>
 		                <?php endif; ?>
@@ -180,15 +181,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
     
-    console.log('Buttons found:', tabButtons.length);
-    console.log('Panes found:', tabPanes.length);
-    
     function showTab(tabName) {
-        console.log('Switching to tab:', tabName);
-        
         tabPanes.forEach(pane => {
             pane.classList.remove('active');
-            console.log('Removed active from:', pane.id);
         });
         
         tabButtons.forEach(btn => {
@@ -196,12 +191,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         const selectedPane = document.getElementById('tab-' + tabName);
-        console.log('Selected pane:', selectedPane);
         if (selectedPane) {
             selectedPane.classList.add('active');
-            console.log('Added active to:', selectedPane.id);
-            console.log('Pane classes:', selectedPane.className);
-            console.log('Computed display:', window.getComputedStyle(selectedPane).display);
         }
         
         const selectedBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
