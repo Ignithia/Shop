@@ -184,6 +184,43 @@ class User {
     }
     
     /**
+     * Delete user account and all associated data
+     */
+    public function delete() {
+        if (!$this->pdo || !$this->id) return false;
+        
+        try {
+            $this->pdo->beginTransaction();
+            
+            // Delete from wishlist
+            $stmt = $this->pdo->prepare("DELETE FROM wishlist WHERE fk_user = ?");
+            $stmt->execute([$this->id]);
+            
+            // Delete from library
+            $stmt = $this->pdo->prepare("DELETE FROM library WHERE fk_user = ?");
+            $stmt->execute([$this->id]);
+            
+            // Delete from shopping_cart
+            $stmt = $this->pdo->prepare("DELETE FROM shopping_cart WHERE fk_user = ?");
+            $stmt->execute([$this->id]);
+            
+            // Delete from review
+            $stmt = $this->pdo->prepare("DELETE FROM review WHERE fk_user = ?");
+            $stmt->execute([$this->id]);
+            
+            // Delete user
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$this->id]);
+            
+            $this->pdo->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            return false;
+        }
+    }
+    
+    /**
      * Add balance to user account
      */
     public function addBalance($amount) {

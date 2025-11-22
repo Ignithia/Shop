@@ -1,4 +1,10 @@
 <?php
+/* Include database classes if not already included */
+if (!class_exists('Database')) {
+    require_once __DIR__ . '/../classes/Database.php';
+    require_once __DIR__ . '/../classes/User.php';
+}
+
 $cur_url = basename($_SERVER['SCRIPT_NAME']);
 
 $nav_items = [
@@ -6,7 +12,13 @@ $nav_items = [
     'settings.php' => 'Settings',
     'wallet.php' => 'Wallet',
     'purchases.php' => 'Purchase History'
-]
+];
+
+/* Determine if in admin directory for correct link paths */
+$__in_admin = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false);
+$__href = function($path) use ($__in_admin) {
+    return ($__in_admin ? '../' : '') . ltrim($path, '/');
+};
 ?>
     <nav class="navigation">
         <div class="nav-dropdown">

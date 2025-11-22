@@ -155,11 +155,25 @@
 							</div>
 
 							<div id="tab-settings" class="tab-pane" style="<?= $selected_tab==='settings' ? '' : 'display:none;' ?>">
-								<h3>Quick Settings</h3>
-								<p>For full account settings go to the <a href="settings.php">Settings Page</a>.</p>
-								<form method="post" action="settings.php" style="margin-top:1rem;">
-									<button class="btn btn-secondary" type="submit">Open Settings</button>
-								</form>
+								<h3>Account Settings</h3>
+								
+								<div class="setting-card">
+									<h4><i class="fas fa-key"></i> Change Password</h4>
+									<p>Update your password to keep your account secure.</p>
+									<a href="settings.php#privacy" class="btn btn-primary">Change Password</a>
+								</div>
+								
+								<div class="setting-card">
+									<h4><i class="fas fa-shield-alt"></i> Two-Factor Authentication</h4>
+									<p>Add an extra layer of security to your account.</p>
+									<button class="btn btn-secondary" onclick="alert('2FA setup coming soon!')">Setup 2FA</button>
+								</div>
+								
+								<div class="setting-card">
+									<h4><i class="fas fa-cog"></i> More Settings</h4>
+									<p>Access all account settings including notifications, privacy, and data management.</p>
+									<a href="settings.php" class="btn btn-primary">Open Full Settings</a>
+								</div>
 							</div>
 						</div>
 		            </div>
@@ -167,28 +181,56 @@
 		    </div>
 		</div>
 
-		<?php include 'inc/footer.inc.php'; ?>
-		<script>
-		document.addEventListener('DOMContentLoaded', function(){
-			const links = document.querySelectorAll('.tab-nav a');
-			const panes = {
-				overview: document.getElementById('tab-overview'),
-				library: document.getElementById('tab-library'),
-				wishlist: document.getElementById('tab-wishlist'),
-				settings: document.getElementById('tab-settings')
-			};
-			links.forEach(link => {
-				link.addEventListener('click', function(e){
-					e.preventDefault();
-					const url = new URL(this.href, window.location.origin);
-					const tab = url.searchParams.get('tab') || 'overview';
-					links.forEach(l => l.classList.remove('active'));
-					this.classList.add('active');
-					Object.keys(panes).forEach(k => panes[k].style.display = (k === tab) ? 'block' : 'none');
-					history.replaceState(null, '', 'profile.php?tab=' + tab);
-				}, {passive:false});
-			});
+<?php include 'inc/footer.inc.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+	const links = document.querySelectorAll('.tab-nav a');
+	const panes = {
+		overview: document.getElementById('tab-overview'),
+		library: document.getElementById('tab-library'),
+		wishlist: document.getElementById('tab-wishlist'),
+		settings: document.getElementById('tab-settings')
+	};
+	
+	function showTab(tabName) {
+		// Hide all panes
+		Object.keys(panes).forEach(k => {
+			if (panes[k]) {
+				panes[k].style.display = 'none';
+			}
 		});
-		</script>
-		</body>
-		</html>
+		
+		if (panes[tabName]) {
+			panes[tabName].style.display = 'block';
+		}
+		
+		links.forEach(l => l.classList.remove('active'));
+		const activeLink = document.querySelector('.tab-nav a[href*="tab=' + tabName + '"]');
+		if (activeLink) {
+			activeLink.classList.add('active');
+		}
+	}
+	
+	links.forEach(link => {
+		link.addEventListener('click', function(e){
+			e.preventDefault();
+			const url = new URL(this.href, window.location.origin);
+			const tab = url.searchParams.get('tab') || 'overview';
+			showTab(tab);
+			history.pushState({tab: tab}, '', 'profile.php?tab=' + tab);
+		});
+	});
+	
+	window.addEventListener('popstate', function(e) {
+		const urlParams = new URLSearchParams(window.location.search);
+		const tab = urlParams.get('tab') || 'overview';
+		showTab(tab);
+	});
+	
+	const urlParams = new URLSearchParams(window.location.search);
+	const initialTab = urlParams.get('tab') || 'overview';
+	showTab(initialTab);
+});
+</script>
+</body>
+</html>

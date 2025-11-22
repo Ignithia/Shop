@@ -32,9 +32,10 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 function formatBalance($amount) {
     return '$' . number_format($amount, 2);
 }
+
+/* Determine if in admin directory for correct link paths */
 $__in_admin = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false);
 $__href = function($path) use ($__in_admin) {
-    // If we're inside /admin/, prefix one level up
     return ($__in_admin ? '../' : '') . ltrim($path, '/');
 };
 ?>

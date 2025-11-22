@@ -140,6 +140,7 @@ $pageTitle = 'Game Management';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
@@ -164,10 +165,10 @@ $pageTitle = 'Game Management';
                     <a href="games.php" class="list-group-item list-group-item-action active">
                         <i class="fas fa-gamepad"></i> Games
                     </a>
-                    <a href="orders.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-shopping-cart"></i> Orders
+                    <a href="categories.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tags"></i> Categories
                     </a>
-                    <a href="settings.php" class="list-group-item list-group-item-action">
+                    <a href="../settings.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                     <div class="dropdown-divider"></div>
@@ -298,71 +299,66 @@ $pageTitle = 'Game Management';
                 </div>
             </div>
             
-            <!-- Games Table -->
+            <!-- Games List -->
             <div class="card">
                 <div class="card-body">
                     <?php if (!empty($games)): ?>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Category</th>
-                                        <th>Price</th>
-                                        <th>Release Date</th>
-                                        <th>Sale Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($games as $gameRow): ?>
-                                        <tr>
-                                            <td><?= $gameRow['id'] ?></td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <?php
-                                                    $gameObj = new Game($pdo);
-                                                    $gameObj->loadById($gameRow['id']);
-                                                    $screenshots = $gameObj->getScreenshots();
-                                                    ?>
-                                                    <?php if (!empty($screenshots)): ?>
-                                                        <img src="<?= htmlspecialchars($screenshots[0]) ?>" alt="<?= htmlspecialchars($gameRow['name']) ?>" class="mr-2" style="width: 50px; height: 50px; object-fit: cover;">
+                        <div class="admin-games-list">
+                            <?php foreach ($games as $gameRow): ?>
+                                <?php
+                                $gameObj = new Game($pdo);
+                                $gameObj->loadById($gameRow['id']);
+                                $screenshots = $gameObj->getScreenshots();
+                                ?>
+                                <div class="admin-game-item">
+                                    <div class="admin-game-row">
+                                        <div class="admin-game-info">
+                                            <?php 
+                                            
+                                            $image_url = '../media/default-game.jpg';
+                                            if (!empty($screenshots)) {
+                                                $image_url = str_replace('./', '../', $screenshots[0]);
+                                            }
+                                            ?>
+                                            <?php if (!empty($screenshots)): ?>
+                                                <img src="<?= htmlspecialchars($image_url) ?>" alt="<?= htmlspecialchars($gameRow['name']) ?>" class="admin-game-thumb">
+                                            <?php else: ?>
+                                                <div class="admin-game-thumb-placeholder">
+                                                    <i class="fas fa-gamepad"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="admin-game-details">
+                                                <h4 class="admin-game-name"><?= htmlspecialchars($gameRow['name']) ?></h4>
+                                                <p class="admin-game-desc"><?= htmlspecialchars(substr($gameRow['description'], 0, 120)) ?>...</p>
+                                                <div class="admin-game-tags">
+                                                    <span class="tag">ID: <?= $gameRow['id'] ?></span>
+                                                    <span class="tag"><?= htmlspecialchars($gameRow['category_name']) ?></span>
+                                                    <span class="tag">$<?= number_format($gameRow['price'], 2) ?></span>
+                                                    <span class="tag"><?= date('M j, Y', strtotime($gameRow['release_date'])) ?></span>
+                                                    <?php if ($gameRow['sale']): ?>
+                                                        <span class="tag sale"><?= $gameRow['sale_percentage'] ?>% OFF</span>
                                                     <?php endif; ?>
-                                                    <div>
-                                                        <strong><?= htmlspecialchars($gameRow['name']) ?></strong>
-                                                        <br><small class="text-muted"><?= htmlspecialchars(substr($gameRow['description'], 0, 60)) ?>...</small>
-                                                    </div>
                                                 </div>
-                                            </td>
-                                            <td><?= htmlspecialchars($gameRow['category_name']) ?></td>
-                                            <td>
-                                                $<?= number_format($gameRow['price'], 2) ?>
-                                                <?php if ($gameRow['sale']): ?>
-                                                    <br><span class="badge badge-danger"><?= $gameRow['sale_percentage'] ?>% OFF</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?= date('M j, Y', strtotime($gameRow['release_date'])) ?></td>
-                                            <td>
-                                                <?php if ($gameRow['sale']): ?>
-                                                    <span class="badge badge-success">On Sale</span>
-                                                <?php else: ?>
-                                                    <span class="badge badge-secondary">Regular</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="../product.php?id=<?= $gameRow['id'] ?>" class="btn btn-outline-info" target="_blank">View</a>
-                                                    <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#editGameModal<?= $gameRow['id'] ?>">
-                                                        Edit
-                                                    </button>
-                                                    <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteGameModal<?= $gameRow['id'] ?>">
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        
+                                            </div>
+                                        </div>
+                                        <div class="admin-game-btns">
+                                            <a href="../product.php?id=<?= $gameRow['id'] ?>" class="btn btn-info" target="_blank">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#editGameModal<?= $gameRow['id'] ?>">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteGameModal<?= $gameRow['id'] ?>">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <!-- Modals for all games -->
+                        <?php foreach ($games as $gameRow): ?>
                                         <!-- Edit Game Modal -->
                                         <div class="modal fade" id="editGameModal<?= $gameRow['id'] ?>" tabindex="-1">
                                             <div class="modal-dialog modal-lg">
@@ -455,10 +451,7 @@ $pageTitle = 'Game Management';
                                                 </div>
                                             </div>
                                         </div>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                <?php endforeach; ?>
                         
                         <!-- Pagination -->
                         <?php if ($totalPages > 1): ?>
@@ -512,6 +505,10 @@ document.getElementById('addGameSale')?.addEventListener('change', function() {
     percentageGroup.style.display = this.checked ? 'block' : 'none';
 });
 </script>
+
+<!-- Bootstrap JS and dependencies for modals -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <?php include '../inc/footer.inc.php'; ?>
 </body>

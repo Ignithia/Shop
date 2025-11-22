@@ -37,31 +37,57 @@ try {
 
 // Handle settings updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
+    if (isset($_POST['change_password'])) {
+        $current_password = $_POST['current_password'] ?? '';
+        $new_password = $_POST['new_password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
+        
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            $error_message = 'All password fields are required.';
+        } elseif ($new_password !== $confirm_password) {
+            $error_message = 'New passwords do not match.';
+        } elseif (strlen($new_password) < 6) {
+            $error_message = 'Password must be at least 6 characters long.';
+        } elseif (!$currentUser->verifyPassword($current_password)) {
+            $error_message = 'Current password is incorrect.';
+        } else {
+            if ($currentUser->changePassword($new_password)) {
+                $success_message = 'Password changed successfully!';
+            } else {
+                $error_message = 'Failed to change password. Please try again.';
+            }
+        }
+    }
+    
     if (isset($_POST['update_notifications'])) {
-        // In a real app, you'd save these to a user preferences table
         $success_message = 'Notification settings updated successfully!';
     }
     
     if (isset($_POST['update_privacy'])) {
-        // In a real app, you'd save these to a user preferences table
         $success_message = 'Privacy settings updated successfully!';
     }
     
     if (isset($_POST['update_display'])) {
-        // In a real app, you'd save these to a user preferences table
         $success_message = 'Display settings updated successfully!';
     }
     
     if (isset($_POST['export_data'])) {
-        // In a real app, you'd generate and download user data
         $success_message = 'Data export request submitted. You will receive an email when ready.';
     }
     
     if (isset($_POST['delete_account'])) {
         $confirm_delete = $_POST['confirm_delete'] ?? '';
         if ($confirm_delete === 'DELETE') {
-            // In a real app, you'd properly handle account deletion
-            $success_message = 'Account deletion request submitted. Please check your email for confirmation.';
+            // Delete user account
+            if ($currentUser->delete()) {
+                // Logout and redirect
+                User::logout();
+                session_destroy();
+                header('Location: login.php?message=account_deleted');
+                exit();
+            } else {
+                $error_message = 'Failed to delete account. Please try again or contact support.';
+            }
         } else {
             $error_message = 'Please type "DELETE" to confirm account deletion.';
         }
@@ -74,7 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - Gaming Store</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
     <?php include 'inc/header.inc.php'; ?>
@@ -108,9 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                     </a>
                     <a href="#privacy" class="settings-nav-link" data-section="privacy">
                         🔒 Privacy & Security
-                    </a>
-                    <a href="#display" class="settings-nav-link" data-section="display">
-                        🎨 Display & Theme
                     </a>
                     <a href="#data" class="settings-nav-link" data-section="data">
                         📊 Data & Downloads
@@ -293,80 +318,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                         
                         <div class="setting-group">
                             <h3>Security Options</h3>
-                            <div class="security-options">
-                                <a href="profile.php" class="btn btn-secondary">Change Password</a>
-                                <button type="button" class="btn btn-secondary" onclick="alert('Two-factor authentication setup would be implemented here.')">
-                                    Setup 2FA
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5 class="m-0">Change Password</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="POST" class="settings-form">
+                                        <div class="form-group">
+                                            <label>Current Password</label>
+                                            <input type="password" class="form-control" name="current_password" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>New Password</label>
+                                            <input type="password" class="form-control" name="new_password" minlength="6" required>
+                                            <small class="form-text text-muted">Must be at least 6 characters long</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Confirm New Password</label>
+                                            <input type="password" class="form-control" name="confirm_password" minlength="6" required>
+                                        </div>
+                                        <button type="submit" name="change_password" class="btn btn-primary">Change Password</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#setup2FAModal">
+                                    <i class="fas fa-shield-alt"></i> Setup 2FA
                                 </button>
                             </div>
                         </div>
                         
                         <button type="submit" name="update_privacy" class="btn btn-primary">Save Privacy Settings</button>
-                    </form>
-                </div>
-
-                <!-- Display & Theme Section -->
-                <div class="settings-section" id="display">
-                    <h2>Display & Theme</h2>
-                    <p class="section-description">Customize the appearance and layout of the gaming store.</p>
-                    
-                    <form method="POST" class="settings-form">
-                        <div class="setting-group">
-                            <h3>Theme Preference</h3>
-                            <div class="radio-list">
-                                <label class="radio-item">
-                                    <input type="radio" name="theme" value="dark" checked>
-                                    <span class="radio-mark"></span>
-                                    <div class="radio-content">
-                                        <strong>Dark Theme</strong>
-                                        <small>Easy on the eyes, perfect for gaming sessions</small>
-                                    </div>
-                                </label>
-                                
-                                <label class="radio-item">
-                                    <input type="radio" name="theme" value="light">
-                                    <span class="radio-mark"></span>
-                                    <div class="radio-content">
-                                        <strong>Light Theme</strong>
-                                        <small>Clean and bright interface</small>
-                                    </div>
-                                </label>
-                                
-                                <label class="radio-item">
-                                    <input type="radio" name="theme" value="auto">
-                                    <span class="radio-mark"></span>
-                                    <div class="radio-content">
-                                        <strong>Auto</strong>
-                                        <small>Follow system preference</small>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="setting-group">
-                            <h3>Layout Options</h3>
-                            <div class="checkbox-list">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="compact_mode">
-                                    <span class="checkmark"></span>
-                                    <div class="checkbox-content">
-                                        <strong>Compact Mode</strong>
-                                        <small>Show more content by reducing spacing</small>
-                                    </div>
-                                </label>
-                                
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="grid_view" checked>
-                                    <span class="checkmark"></span>
-                                    <div class="checkbox-content">
-                                        <strong>Grid View Default</strong>
-                                        <small>Use grid layout as default for game listings</small>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" name="update_display" class="btn btn-primary">Save Display Settings</button>
                     </form>
                 </div>
 
@@ -430,6 +412,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     </div>
 
     <?php include 'inc/footer.inc.php'; ?>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         // Settings navigation

@@ -89,6 +89,7 @@ $pageTitle = 'User Management';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
@@ -113,10 +114,10 @@ $pageTitle = 'User Management';
                     <a href="games.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-gamepad"></i> Games
                     </a>
-                    <a href="orders.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-shopping-cart"></i> Orders
+                    <a href="categories.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tags"></i> Categories
                     </a>
-                    <a href="settings.php" class="list-group-item list-group-item-action">
+                    <a href="../settings.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                     <div class="dropdown-divider"></div>
@@ -161,11 +162,10 @@ $pageTitle = 'User Management';
                             <input type="text" class="form-control" name="search" placeholder="Search users..." value="<?= htmlspecialchars($filters['search']) ?>">
                         </div>
                         <div class="form-group mr-3">
-                            <select name="role" class="form-control">
-                                <option value="">All Roles</option>
-                                <option value="user" <?= $filters['role'] === 'user' ? 'selected' : '' ?>>User</option>
-                                <option value="admin" <?= $filters['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
-                                <option value="moderator" <?= $filters['role'] === 'moderator' ? 'selected' : '' ?>>Moderator</option>
+                            <select name="admin" class="form-control">
+                                <option value="">All Users</option>
+                                <option value="0" <?= isset($filters['admin']) && $filters['admin'] === false ? 'selected' : '' ?>>Regular Users</option>
+                                <option value="1" <?= isset($filters['admin']) && $filters['admin'] === true ? 'selected' : '' ?>>Admins</option>
                             </select>
                         </div>
                         <div class="form-group mr-3">
@@ -192,7 +192,7 @@ $pageTitle = 'User Management';
                                         <th>ID</th>
                                         <th>Username</th>
                                         <th>Email</th>
-                                        <th>Role</th>
+                                        <th>User Type</th>
                                         <th>Balance</th>
                                         <th>Games Owned</th>
                                         <th>Total Spent</th>
@@ -213,9 +213,11 @@ $pageTitle = 'User Management';
                                             </td>
                                             <td><?= htmlspecialchars($userRow['email']) ?></td>
                                             <td>
-                                                <span class="badge badge-<?= $userRow['role'] === 'admin' ? 'danger' : ($userRow['role'] === 'moderator' ? 'warning' : 'primary') ?>">
-                                                    <?= ucfirst($userRow['role'] ?? 'user') ?>
-                                                </span>
+                                                <?php if ($userRow['admin']): ?>
+                                                    <span class="badge badge-danger"><i class="fas fa-crown"></i> Admin</span>
+                                                <?php else: ?>
+                                                    <span class="badge badge-primary"><i class="fas fa-user"></i> User</span>
+                                                <?php endif; ?>
                                             </td>
                                             <td>$<?= number_format($userRow['balance'], 2) ?></td>
                                             <td><?= $userRow['games_owned'] ?></td>
@@ -394,6 +396,10 @@ $pageTitle = 'User Management';
         </div>
     </div>
 </div>
+
+<!-- Bootstrap JS and dependencies for modals -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <?php include '../inc/footer.inc.php'; ?>
 </body>

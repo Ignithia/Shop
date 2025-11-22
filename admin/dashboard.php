@@ -126,8 +126,8 @@ $pageTitle = 'Admin Dashboard';
                     <a href="games.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-gamepad"></i> Games
                     </a>
-                    <a href="orders.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-shopping-cart"></i> Orders
+                    <a href="categories.php" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tags"></i> Categories
                     </a>
                     <a href="settings.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cog"></i> Settings
