@@ -709,6 +709,13 @@ input::placeholder {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 /* Stats (dashboard info) */
 .stats {
   display: flex;

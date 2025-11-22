@@ -114,7 +114,7 @@ function formatPrice($amount) {
             <div class="dashboard-card">
                 <h3>🛠 Admin</h3>
                 <p>Quick access to admin tools and reports.</p>
-                <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                <div class="admin-actions">
                     <a href="admin/dashboard.php" class="card-btn">Dashboard</a>
                     <a href="admin/users.php" class="card-btn secondary">Users</a>
                     <a href="admin/games.php" class="card-btn secondary">Games</a>
