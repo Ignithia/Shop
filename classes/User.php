@@ -509,9 +509,15 @@ class User {
         }
         
         // Filter by admin status
-        if (isset($filters['admin'])) {
+        if (isset($filters['admin']) && $filters['admin'] !== null) {
             $conditions[] = "u.admin = ?";
             $params[] = $filters['admin'];
+        }
+        
+        // Filter by banned status
+        if (isset($filters['banned']) && $filters['banned'] !== null) {
+            $conditions[] = "u.banned = ?";
+            $params[] = $filters['banned'];
         }
         
         if (!empty($conditions)) {

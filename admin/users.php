@@ -50,7 +50,8 @@ if ($_POST['action'] ?? '' === 'update_user') {
 // Get filter parameters
 $filters = [
     'search' => trim($_GET['search'] ?? ''),
-    'admin' => isset($_GET['admin']) ? (bool)$_GET['admin'] : null,
+    'admin' => isset($_GET['admin']) && $_GET['admin'] !== '' ? ($_GET['admin'] === '1') : null,
+    'banned' => isset($_GET['banned']) && $_GET['banned'] !== '' ? ($_GET['banned'] === '1') : null,
     'limit' => 20,
     'offset' => intval($_GET['page'] ?? 0) * 20
 ];
@@ -66,9 +67,9 @@ if ($filters['search']) {
     $countParams[] = '%' . $filters['search'] . '%';
     $countParams[] = '%' . $filters['search'] . '%';
 }
-if ($filters['role']) {
-    $countQuery .= " AND role = ?";
-    $countParams[] = $filters['role'];
+if ($filters['admin'] !== null) {
+    $countQuery .= " AND admin = ?";
+    $countParams[] = $filters['admin'];
 }
 if ($filters['banned'] !== null) {
     $countQuery .= " AND banned = ?";
@@ -155,30 +156,33 @@ $pageTitle = 'User Management';
             <?php endif; ?>
             
             <!-- Filters -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="get" class="form-inline">
-                        <div class="form-group mr-3">
-                            <input type="text" class="form-control" name="search" placeholder="Search users..." value="<?= htmlspecialchars($filters['search']) ?>">
-                        </div>
-                        <div class="form-group mr-3">
-                            <select name="admin" class="form-control">
-                                <option value="">All Users</option>
-                                <option value="0" <?= isset($filters['admin']) && $filters['admin'] === false ? 'selected' : '' ?>>Regular Users</option>
-                                <option value="1" <?= isset($filters['admin']) && $filters['admin'] === true ? 'selected' : '' ?>>Admins</option>
-                            </select>
-                        </div>
-                        <div class="form-group mr-3">
-                            <select name="banned" class="form-control">
-                                <option value="">All Users</option>
-                                <option value="0" <?= $filters['banned'] === false ? 'selected' : '' ?>>Active Only</option>
-                                <option value="1" <?= $filters['banned'] === true ? 'selected' : '' ?>>Banned Only</option>
-                            </select>
-                        </div>
+            <div class="admin-filter-bar">
+                <form method="get" class="admin-filter-form users-filter">
+                    <div class="filter-group">
+                        <label>Search</label>
+                        <input type="text" name="search" placeholder="Search users..." value="<?= htmlspecialchars($filters['search']) ?>">
+                    </div>
+                    <div class="filter-group">
+                        <label>User Type</label>
+                        <select name="admin">
+                            <option value="">All Users</option>
+                            <option value="0" <?= isset($filters['admin']) && $filters['admin'] === false ? 'selected' : '' ?>>Regular Users</option>
+                            <option value="1" <?= isset($filters['admin']) && $filters['admin'] === true ? 'selected' : '' ?>>Admins</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select name="banned">
+                            <option value="">All Users</option>
+                            <option value="0" <?= $filters['banned'] === false ? 'selected' : '' ?>>Active Only</option>
+                            <option value="1" <?= $filters['banned'] === true ? 'selected' : '' ?>>Banned Only</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
                         <button type="submit" class="btn btn-primary">Filter</button>
-                        <a href="users.php" class="btn btn-secondary ml-2">Clear</a>
-                    </form>
-                </div>
+                        <a href="users.php" class="btn btn-secondary">Clear</a>
+                    </div>
+                </form>
             </div>
             
             <!-- Users Table -->

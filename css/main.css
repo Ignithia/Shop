@@ -3509,21 +3509,48 @@ table.admin-table .cell-actions .btn {
 }
 
 .admin-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, #2a475e 0%, #1e2328 100%);
+  border: 1px solid rgba(102, 192, 244, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-filter-form {
+  display: grid;
+  gap: 1rem;
+  align-items: end;
+}
+
+.admin-filter-form.games-filter {
+  grid-template-columns: 1fr 1fr auto auto;
+}
+
+.admin-filter-form.users-filter {
+  grid-template-columns: 2fr 1fr 1fr auto;
+}
+
+.filter-group {
+  margin: 0;
+}
+
+.filter-group label {
+  color: var(--accent-blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
 }
 
 .admin-filter-bar input[type="text"],
 .admin-filter-bar select {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 0.6rem 0.75rem;
+  background: rgba(27, 40, 56, 0.8);
+  border: 1px solid #3c4043;
+  color: #fff;
+  padding: 0.65rem 1rem;
   border-radius: 8px;
-  font-size: 0.75rem;
-  min-width: 160px;
+  font-size: 0.9rem;
+  width: 100%;
 }
 
 .admin-filter-bar input:focus,
@@ -3531,6 +3558,61 @@ table.admin-table .cell-actions .btn {
   outline: none;
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(102, 192, 244, 0.15);
+}
+
+.filter-checkbox-group {
+  padding: 0.65rem 1rem;
+  background: rgba(102, 192, 244, 0.1);
+  border: 1px solid rgba(102, 192, 244, 0.3);
+  border-radius: 8px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-checkbox-group input[type="checkbox"] {
+  margin: 0;
+}
+
+.filter-checkbox-group label {
+  color: var(--accent-blue);
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-actions .btn {
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-actions .btn-primary {
+  background: linear-gradient(90deg, #06befa 0%, #005fcc 100%);
+  color: white;
+}
+
+.filter-actions .btn-secondary {
+  background: linear-gradient(90deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+}
+
+.filter-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .admin-pagination {

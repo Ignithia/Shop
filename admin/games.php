@@ -273,30 +273,32 @@ $pageTitle = 'Game Management';
             <?php endif; ?>
             
             <!-- Filters -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="get" class="form-inline">
-                        <div class="form-group mr-3">
-                            <input type="text" class="form-control" name="search" placeholder="Search games..." value="<?= htmlspecialchars($filters['search']) ?>">
-                        </div>
-                        <div class="form-group mr-3">
-                            <select name="category" class="form-control">
-                                <option value="">All Categories</option>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?= $category['id'] ?>" <?= $filters['category'] == $category['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($category['name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-check mr-3">
-                            <input class="form-check-input" type="checkbox" name="on_sale" id="on_sale" <?= $filters['on_sale'] ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="on_sale">On Sale Only</label>
-                        </div>
+            <div class="admin-filter-bar">
+                <form method="get" class="admin-filter-form games-filter">
+                    <div class="filter-group">
+                        <label>Search</label>
+                        <input type="text" name="search" placeholder="Search games..." value="<?= htmlspecialchars($filters['search']) ?>">
+                    </div>
+                    <div class="filter-group">
+                        <label>Category</label>
+                        <select name="category">
+                            <option value="">All Categories</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?= $category['id'] ?>" <?= $filters['category'] == $category['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($category['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="filter-checkbox-group">
+                        <input type="checkbox" name="on_sale" id="on_sale" <?= $filters['on_sale'] ? 'checked' : '' ?>>
+                        <label for="on_sale">🏷️ On Sale Only</label>
+                    </div>
+                    <div class="filter-actions">
                         <button type="submit" class="btn btn-primary">Filter</button>
-                        <a href="games.php" class="btn btn-secondary ml-2">Clear</a>
-                    </form>
-                </div>
+                        <a href="games.php" class="btn btn-secondary">Clear</a>
+                    </div>
+                </form>
             </div>
             
             <!-- Games List -->
