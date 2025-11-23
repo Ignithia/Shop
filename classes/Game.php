@@ -69,6 +69,7 @@ class Game {
             $this->id = $gameData['id'];
             $this->name = $gameData['name'];
             $this->description = $gameData['description'];
+            $this->cover_image = $gameData['cover_image'] ?? null;
             $this->original_price = (float)$gameData['price'];
             $this->price = $this->original_price;
             $this->release_date = $gameData['release_date'];

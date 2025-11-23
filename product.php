@@ -55,26 +55,65 @@ $user_owns_game = $currentUser->ownsGame($game_id);
     <div class="container">
         <div class="product-page">
             <div class="product-header">
-                <div class="product-image">
-                    <?php if ($game->isOnSale()): ?>
-                        <div class="sale-badge">-<?php echo $game->getSalePercentage(); ?>%</div>
-                    <?php endif; ?>
+                <div class="product-image-section">
                     <?php 
                     $screenshots = $game->getScreenshots();
                     
-                    // Get cover image
+                    // Collect all images
+                    $all_images = [];
+                    
                     if (!empty($game->getCoverImage())) {
                         if (filter_var($game->getCoverImage(), FILTER_VALIDATE_URL)) {
-                            $image_url = $game->getCoverImage();
+                            $all_images[] = $game->getCoverImage();
                         } else {
-                            $image_url = './media/' . $game->getCoverImage();
+                            $all_images[] = './media/' . $game->getCoverImage();
                         }
-                    } else {
-                        $image_url = null;
+                    }
+                    
+                    // Add screenshots
+                    foreach ($screenshots as $screenshot) {
+                        if (filter_var($screenshot, FILTER_VALIDATE_URL)) {
+                            $all_images[] = $screenshot;
+                        } else {
+                            $all_images[] = './media/' . $screenshot;
+                        }
                     }
                     ?>
-                    <?php if ($image_url): ?>
-                        <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game->getName()); ?>">
+                    
+                    <?php if (!empty($all_images)): ?>
+                    <div class="product-image">
+                        <?php if ($game->isOnSale()): ?>
+                            <div class="sale-badge">-<?php echo $game->getSalePercentage(); ?>%</div>
+                        <?php endif; ?>
+                        <img id="mainProductImage" src="<?php echo htmlspecialchars($all_images[0]); ?>" alt="<?php echo htmlspecialchars($game->getName()); ?>">
+                    </div>
+                    
+                    <?php if (count($all_images) > 1): ?>
+                    <div class="product-thumbnails">
+                        <button class="thumbnail-nav prev" onclick="scrollThumbnails(-1)">‹</button>
+                        <div class="thumbnails-container">
+                            <?php foreach ($all_images as $index => $image): ?>
+                                <img src="<?php echo htmlspecialchars($image); ?>" 
+                                     alt="<?php echo htmlspecialchars($game->getName()); ?> screenshot <?php echo $index + 1; ?>"
+                                     class="thumbnail-item <?php echo $index === 0 ? 'active' : ''; ?>"
+                                     onclick="changeMainImage('<?php echo addslashes($image); ?>', this)">
+                            <?php endforeach; ?>
+                        </div>
+                        <button class="thumbnail-nav next" onclick="scrollThumbnails(1)">›</button>
+                    </div>
+                    <?php endif; ?>
+                    <?php else: ?>
+                    <div class="product-image">
+                        <?php if ($game->isOnSale()): ?>
+                            <div class="sale-badge">-<?php echo $game->getSalePercentage(); ?>%</div>
+                        <?php endif; ?>
+                        <div style="width: 100%; height: 400px; background: var(--bg-secondary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                            <div style="text-align: center;">
+                                <i class="fas fa-image" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                                <p>No images available</p>
+                            </div>
+                        </div>
+                    </div>
                     <?php endif; ?>
                 </div>
                 <div class="product-info">
@@ -142,12 +181,11 @@ $user_owns_game = $currentUser->ownsGame($game_id);
                     $related_games = array_filter($related_games, function($g) use ($game_id) {
                         return $g['id'] !== $game_id;
                     });
-                    $related_games = array_slice($related_games, 0, 3); // Show only 3 related games
+                    $related_games = array_slice($related_games, 0, 3);
                     ?>
                     <?php foreach ($related_games as $related_game): ?>
                         <div class="game-card">
                             <?php 
-                            // Get cover image for related game
                             if (!empty($related_game['cover_image'])) {
                                 if (filter_var($related_game['cover_image'], FILTER_VALIDATE_URL)) {
                                     $related_image_url = $related_game['cover_image'];
@@ -172,6 +210,27 @@ $user_owns_game = $currentUser->ownsGame($game_id);
             </div>
         </div>
     </div>
+    
+    <script>
+    function changeMainImage(imageUrl, thumbnail) {
+        document.getElementById('mainProductImage').src = imageUrl;
+
+        document.querySelectorAll('.thumbnail-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        thumbnail.classList.add('active');
+    }
+    
+    function scrollThumbnails(direction) {
+        const container = document.querySelector('.thumbnails-container');
+        const scrollAmount = 150;
+        container.scrollBy({
+            left: direction * scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+    </script>
+    
     <?php include './inc/footer.inc.php'; ?>
 </body>
 </html>

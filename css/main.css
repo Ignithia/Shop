@@ -1307,16 +1307,105 @@ body::before {
   border: 1px solid var(--border-color);
 }
 
+.product-image-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .product-image {
   position: relative;
+  width: 100%;
 }
 
 .product-image img {
   width: 100%;
-  height: 300px;
+  height: 400px;
   object-fit: cover;
   border-radius: 10px;
+  background: var(--bg-secondary);
 }
+
+.product-thumbnails {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.thumbnails-container {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-blue) var(--bg-secondary);
+  padding: 0.5rem 0;
+}
+
+.thumbnails-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.thumbnails-container::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.thumbnails-container::-webkit-scrollbar-thumb {
+  background: var(--accent-blue);
+  border-radius: 3px;
+}
+
+.thumbnail-item {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.thumbnail-item:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+}
+
+.thumbnail-item.active {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+.thumbnail-nav {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.thumbnail-nav:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  transform: scale(1.1);
+}
+
+.thumbnail-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 
 .product-title {
   font-family: var(--font-gaming);
