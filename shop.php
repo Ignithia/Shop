@@ -198,13 +198,13 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                         <div class="game-pricing">
                             <?php if ($game['sale'] && $game['sale_percentage'] > 0): ?>
                                 <?php 
-                                $original_price = $game['price'];
-                                $sale_price = $game['price'] * (1 - $game['sale_percentage'] / 100);
+                                $original_price = $game['price'] * 100;
+                                $sale_price = $game['price'] * (1 - $game['sale_percentage'] / 100) * 100;
                                 ?>
-                                <span class="original-price">$<?php echo number_format($original_price, 2); ?></span>
-                                <span class="sale-price">$<?php echo number_format($sale_price, 2); ?></span>
+                                <span class="original-price"><?php echo number_format($original_price, 0); ?> coins</span>
+                                <span class="sale-price"><?php echo number_format($sale_price, 0); ?> coins</span>
                             <?php else: ?>
-                                <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
+                                <div class="game-price"><?php echo number_format($game['price'] * 100, 0); ?> coins</div>
                             <?php endif; ?>
                         </div>
                         
