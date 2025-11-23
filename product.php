@@ -327,7 +327,7 @@ if ($user_owns_game) {
                             <?php endif; ?>
                             <div class="game-info">
                                 <h4 class="game-title"><?php echo htmlspecialchars($related_game['name']); ?></h4>
-                                <div class="game-price">$<?php echo number_format($related_game['price'], 2); ?></div>
+                                <div class="game-price"><?php echo number_format($related_game['price'] * 100); ?> coins</div>
                                 <a href="product.php?id=<?php echo $related_game['id']; ?>" class="card-btn secondary">View Details</a>
                             </div>
                         </div>

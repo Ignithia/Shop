@@ -312,25 +312,17 @@ class User {
         // Check if user has enough balance
         if ($this->balance < $price) return false;
         
-        try {
-            $this->pdo->beginTransaction();
-            
-            // Deduct balance
-            $this->deductBalance($price);
-            
-            // Add to library
-            $stmt = $this->pdo->prepare("
-                INSERT INTO library (fk_user, fk_game, purchased_at) 
-                VALUES (?, ?, NOW())
-            ");
-            $stmt->execute([$this->id, $gameId]);
-            
-            $this->pdo->commit();
-            return true;
-        } catch (Exception $e) {
-            $this->pdo->rollback();
-            return false;
-        }
+        // Deduct balance
+        $this->deductBalance($price);
+        
+        // Add to library
+        $stmt = $this->pdo->prepare("
+            INSERT INTO library (fk_user, fk_game, purchased_at) 
+            VALUES (?, ?, NOW())
+        ");
+        $stmt->execute([$this->id, $gameId]);
+        
+        return true;
     }
     
     /**

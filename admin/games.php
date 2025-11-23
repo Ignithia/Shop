@@ -271,7 +271,7 @@ $pageTitle = 'Game Management';
                                     <input type="text" class="form-control" name="name" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Price (in dollars)</label>
+                                    <label>Price (in euros e.g 29.99)</label>
                                     <input type="number" step="0.01" class="form-control" name="price" required>
                                 </div>
                                 <div class="form-group">

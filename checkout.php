@@ -34,30 +34,35 @@ $cart_items = $currentUser->getShoppingCart();
 $total_price = 0;
 
 foreach ($cart_items as $game) {
-    $total_price += $game['price'];
+    $total_price += $game['price'] * 100;
 }
 
 // Handle purchase
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'purchase') {
     if ($currentUser->getBalance() >= $total_price && !empty($cart_items)) {
+        $transaction_started = false;
         try {
             $pdo->beginTransaction();
+            $transaction_started = true;
             
             // Process each game purchase
             foreach ($cart_items as $game) {
-                $currentUser->purchaseGame($game['id'], $game['price']);
+                $currentUser->purchaseGame($game['id'], $game['price'] * 100);
             }
             
             // Clear cart after successful purchase
             $currentUser->clearCart();
             
             $pdo->commit();
+            $transaction_started = false;
             
             // Redirect to success page
             header('Location: checkout.php?success=1');
             exit();
         } catch (Exception $e) {
-            $pdo->rollback();
+            if ($transaction_started) {
+                $pdo->rollback();
+            }
             $error_message = 'Purchase failed. Please try again.';
         }
     } else {
@@ -126,7 +131,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                                         <p><?php echo htmlspecialchars($game['category_name'] ?? 'Unknown'); ?></p>
                                     </div>
                                     <div class="item-price">
-                                        $<?php echo number_format($game['price'], 2); ?>
+                                        <?php echo number_format($game['price'] * 100); ?> coins
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -135,11 +140,11 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                         <div class="order-total">
                             <div class="total-line">
                                 <span>Subtotal:</span>
-                                <span>$<?php echo number_format($total_price, 2); ?></span>
+                                <span><?php echo number_format($total_price); ?> coins</span>
                             </div>
                             <div class="total-line final">
                                 <span>Total:</span>
-                                <span>$<?php echo number_format($total_price, 2); ?></span>
+                                <span><?php echo number_format($total_price); ?> coins</span>
                             </div>
                         </div>
                     </div>
@@ -149,7 +154,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                         <div class="wallet-info">
                             <div class="wallet-balance">
                                 <span>Your Balance:</span>
-                                <span class="balance-amount">$<?php echo number_format($currentUser->getBalance(), 2); ?></span>
+                                <span class="balance-amount"><?php echo number_format($currentUser->getBalance()); ?> coins</span>
                             </div>
                             
                             <?php if ($currentUser->getBalance() >= $total_price): ?>
@@ -158,7 +163,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                                 </div>
                             <?php else: ?>
                                 <div class="balance-status insufficient">
-                                    ❌ Insufficient balance (Need $<?php echo number_format($total_price - $currentUser->getBalance(), 2); ?> more)
+                                    ❌ Insufficient balance (Need <?php echo number_format($total_price - $currentUser->getBalance()); ?> more coins)
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -175,7 +180,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                             <div class="checkout-actions">
                                 <?php if ($currentUser->getBalance() >= $total_price): ?>
                                     <button type="submit" class="btn btn-primary checkout-btn">
-                                        Complete Purchase ($<?php echo number_format($total_price, 2); ?>)
+                                        Complete Purchase (<?php echo number_format($total_price); ?> coins)
                                     </button>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-disabled" disabled>

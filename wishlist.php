@@ -104,8 +104,8 @@ $total_value = 0;
 $affordable_count = 0;
 foreach ($user_wishlist as $game) {
     $price = $game['price'] ?? 0;
-    $total_value += $price;
-    if ($price <= $currentUser->getBalance()) {
+    $total_value += $price * 100; // Convert to coins
+    if (($price * 100) <= $currentUser->getBalance()) {
         $affordable_count++;
     }
 }
@@ -176,9 +176,9 @@ foreach ($user_wishlist as $game) {
                 <?php else: ?>
                     <?php foreach ($user_wishlist as $wishlist_item): ?>
                         <?php 
-                        $game = $wishlist_item; // Database already returns full game data
+                        $game = $wishlist_item;
                         $is_owned = $currentUser->ownsGame($game['id']);
-                        $can_afford = $game['price'] <= $currentUser->getBalance();
+                        $can_afford = ($game['price'] * 100) <= $currentUser->getBalance();
                         ?>
                         <div class="wishlist-item" data-game-id="<?= $game['id'] ?>">
                             <div class="item-rank">
@@ -199,7 +199,7 @@ foreach ($user_wishlist as $game) {
                             
                             <div class="item-image">
                                 <a href="product.php?id=<?= $game['id'] ?>">
-                                    <img src="media/game_<?= $game['id'] ?>.jpg" 
+                                    <img src="./media/<?= $game['cover_image'] ?? 'placeholder.jpg' ?>" 
                                          alt="<?= htmlspecialchars($game['name']) ?>"
                                          onerror="this.src='media/placeholder.jpg'">
                                 </a>
@@ -215,15 +215,15 @@ foreach ($user_wishlist as $game) {
                             
                             <div class="item-price">
                                 <?php if ($game['sale']): ?>
-                                    <span class="original-price">$<?= number_format($game['original_price'] ?? $game['price'], 2) ?></span>
-                                    <span class="sale-price">$<?= number_format($game['price'], 2) ?></span>
+                                    <span class="original-price"><?= number_format(($game['original_price'] ?? $game['price']) * 100) ?> coins</span>
+                                    <span class="sale-price"><?= number_format($game['price'] * 100) ?> coins</span>
                                 <?php else: ?>
                                     <span class="price-amount <?= $can_afford ? 'affordable' : 'expensive' ?>">
-                                        $<?= number_format($game['price'], 2) ?>
+                                        <?= number_format($game['price'] * 100) ?> coins
                                     </span>
                                 <?php endif; ?>
                                 <?php if (!$can_afford): ?>
-                                    <small style="color: #e74c3c; display: block;">Need $<?= number_format($game['price'] - $currentUser->getBalance(), 2) ?> more</small>
+                                    <small style="color: #e74c3c; display: block;">Need <?= number_format(($game['price'] * 100) - $currentUser->getBalance()) ?> more coins</small>
                                 <?php endif; ?>
                             </div>
                             
@@ -263,7 +263,7 @@ foreach ($user_wishlist as $game) {
                             <span class="stat-label">Games</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">$<?= number_format($total_value, 2) ?></span>
+                            <span class="stat-number"><?= number_format($total_value) ?> coins</span>
                             <span class="stat-label">Total Value</span>
                         </div>
                         <div class="stat-item">
@@ -276,7 +276,7 @@ foreach ($user_wishlist as $game) {
                         <form method="POST" action="cart.php" style="display: inline;">
                             <input type="hidden" name="action" value="add_multiple">
                             <?php foreach ($user_wishlist as $game): ?>
-                                <?php if ($game['price'] <= $currentUser->getBalance() && !$currentUser->ownsGame($game['id'])): ?>
+                                <?php if ($game['price'] * 100 <= $currentUser->getBalance() && !$currentUser->ownsGame($game['id'])): ?>
                                     <input type="hidden" name="game_ids[]" value="<?= $game['id'] ?>">
                                 <?php endif; ?>
                             <?php endforeach; ?>

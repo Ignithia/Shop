@@ -62,7 +62,7 @@ $cart_games = $currentUser->getShoppingCart();
 $total_price = 0;
 
 foreach ($cart_games as $game) {
-    $total_price += $game['price'];
+    $total_price += $game['price'] * 100;
 }
 ?>
 <!DOCTYPE html>
@@ -119,7 +119,7 @@ foreach ($cart_games as $game) {
                                     <p class="cart-item-description"><?php echo htmlspecialchars($game['description']); ?></p>
                                 </div>
                                 <div class="cart-item-price">
-                                    <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
+                                    <div class="game-price"><?php echo number_format($game['price'] * 100); ?> coins</div>
                                 </div>
                                 <div class="cart-item-actions">
                                     <form method="post" style="display: inline;">
@@ -139,15 +139,15 @@ foreach ($cart_games as $game) {
                             <h3>Order Summary</h3>
                             <div class="summary-row">
                                 <span>Items (<?php echo count($cart_games); ?>):</span>
-                                <span>$<?php echo number_format($total_price, 2); ?></span>
+                                <span><?php echo number_format($total_price); ?> coins</span>
                             </div>
                             <div class="summary-row">
                                 <span>Tax:</span>
-                                <span>$0.00</span>
+                                <span>0 coins</span>
                             </div>
                             <div class="summary-row total">
                                 <span>Total:</span>
-                                <span>$<?php echo number_format($total_price, 2); ?></span>
+                                <span><?php echo number_format($total_price); ?> coins</span>
                             </div>
                             
                             <div class="cart-actions">
