@@ -40,6 +40,111 @@ if (!$game->loadById($game_id)) {
 }
 
 $user_owns_game = $currentUser->ownsGame($game_id);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_review'])) {
+    $review_id = intval($_POST['review_id']);
+    
+    $stmt = $pdo->prepare("SELECT fk_user FROM review WHERE id = ? AND fk_game = ?");
+    $stmt->execute([$review_id, $game_id]);
+    $review_owner = $stmt->fetchColumn();
+    
+    if ($review_owner == $currentUser->getId() || $currentUser->isAdmin()) {
+        $stmt = $pdo->prepare("DELETE FROM review WHERE id = ?");
+        if ($stmt->execute([$review_id])) {
+            $review_message = 'Review deleted successfully!';
+        } else {
+            $review_error = 'Failed to delete review.';
+        }
+    } else {
+        $review_error = 'You do not have permission to delete this review.';
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_review'])) {
+    $review_id = intval($_POST['review_id']);
+    $review_text = trim($_POST['review_text'] ?? '');
+    $recommended = isset($_POST['recommended']) ? 1 : 0;
+    
+    if (empty($review_text)) {
+        $review_error = 'Please write a review.';
+    } else {
+        $stmt = $pdo->prepare("SELECT fk_user FROM review WHERE id = ? AND fk_game = ?");
+        $stmt->execute([$review_id, $game_id]);
+        $review_owner = $stmt->fetchColumn();
+        
+        if ($review_owner == $currentUser->getId()) {
+            $stmt = $pdo->prepare("UPDATE review SET text = ?, recommended = ? WHERE id = ?");
+            if ($stmt->execute([$review_text, $recommended, $review_id])) {
+                $review_message = 'Review updated successfully!';
+            } else {
+                $review_error = 'Failed to update review.';
+            }
+        } else {
+            $review_error = 'You do not have permission to edit this review.';
+        }
+    }
+}
+
+// Handle review submission
+$review_message = '';
+$review_error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
+    if ($user_owns_game) {
+        $review_text = trim($_POST['review_text'] ?? '');
+        $recommended = isset($_POST['recommended']) ? 1 : 0;
+        
+        if (empty($review_text)) {
+            $review_error = 'Please write a review.';
+        } else {
+            // Check if user already reviewed this game
+            $stmt = $pdo->prepare("SELECT id FROM review WHERE fk_user = ? AND fk_game = ?");
+            $stmt->execute([$currentUser->getId(), $game_id]);
+            
+            if ($stmt->fetch()) {
+                $review_error = 'You have already reviewed this game.';
+            } else {
+                // Insert review
+                $stmt = $pdo->prepare("INSERT INTO review (text, recommended, created_at, fk_user, fk_game) VALUES (?, ?, NOW(), ?, ?)");
+                if ($stmt->execute([$review_text, $recommended, $currentUser->getId(), $game_id])) {
+                    $review_message = 'Review posted successfully!';
+                } else {
+                    $review_error = 'Failed to post review.';
+                }
+            }
+        }
+    } else {
+        $review_error = 'You must own this game to review it.';
+    }
+}
+
+// Get reviews for this game
+$stmt = $pdo->prepare("
+    SELECT r.*, u.username 
+    FROM review r 
+    JOIN users u ON r.fk_user = u.id 
+    WHERE r.fk_game = ? 
+    ORDER BY r.created_at DESC
+");
+$stmt->execute([$game_id]);
+$reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate review statistics
+$total_reviews = count($reviews);
+$recommended_count = 0;
+foreach ($reviews as $review) {
+    if ($review['recommended']) {
+        $recommended_count++;
+    }
+}
+$recommendation_percentage = $total_reviews > 0 ? round(($recommended_count / $total_reviews) * 100) : 0;
+
+// Check if current user has already reviewed
+$user_has_reviewed = false;
+if ($user_owns_game) {
+    $stmt = $pdo->prepare("SELECT id FROM review WHERE fk_user = ? AND fk_game = ?");
+    $stmt->execute([$currentUser->getId(), $game_id]);
+    $user_has_reviewed = $stmt->fetch() !== false;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -170,6 +275,27 @@ $user_owns_game = $currentUser->ownsGame($game_id);
                         <strong>Sale:</strong> <?php echo $game->getSalePercentage(); ?>% OFF
                     </div>
                     <?php endif; ?>
+                    <?php if ($total_reviews > 0): ?>
+                    <div class="detail-item detail-reviews">
+                        <strong>Reviews:</strong> 
+                        <?php if ($recommendation_percentage >= 80): ?>
+                            <span class="badge-positive">Overwhelmingly Positive</span>
+                        <?php elseif ($recommendation_percentage >= 70): ?>
+                            <span class="badge-positive">Very Positive</span>
+                        <?php elseif ($recommendation_percentage >= 60): ?>
+                            <span class="badge-positive">Positive</span>
+                        <?php elseif ($recommendation_percentage >= 50): ?>
+                            <span class="badge-mixed">Mixed</span>
+                        <?php elseif ($recommendation_percentage >= 40): ?>
+                            <span class="badge-negative">Mostly Negative</span>
+                        <?php else: ?>
+                            <span class="badge-negative">Negative</span>
+                        <?php endif; ?>
+                        <span class="review-stats-inline">
+                            (<?php echo $recommendation_percentage; ?>% of <?php echo $total_reviews; ?> review<?php echo $total_reviews !== 1 ? 's' : ''; ?>)
+                        </span>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -206,6 +332,123 @@ $user_owns_game = $currentUser->ownsGame($game_id);
                             </div>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="reviews-section">
+                <h3>Reviews</h3>
+                
+                <?php if ($user_owns_game && !$user_has_reviewed): ?>
+                <div class="review-form-card">
+                    <h4>Write a Review</h4>
+                    <?php if ($review_message): ?>
+                        <div class="alert alert-success"><?php echo htmlspecialchars($review_message); ?></div>
+                    <?php endif; ?>
+                    <?php if ($review_error): ?>
+                        <div class="alert alert-error"><?php echo htmlspecialchars($review_error); ?></div>
+                    <?php endif; ?>
+                    <form method="post" class="review-form">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="recommended" value="1" checked>
+                                <span class="checkbox-text">
+                                    <i class="fas fa-thumbs-up"></i> I recommend this game
+                                </span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="review_text" class="form-control" rows="5" placeholder="Share your thoughts about this game..." required></textarea>
+                        </div>
+                        <button type="submit" name="submit_review" class="btn btn-primary">Post Review</button>
+                    </form>
+                </div>
+                <?php endif; ?>
+
+                <div class="reviews-list">
+                    <?php if ($review_message): ?>
+                        <div class="alert alert-success"><?php echo htmlspecialchars($review_message); ?></div>
+                    <?php endif; ?>
+                    <?php if ($review_error): ?>
+                        <div class="alert alert-error"><?php echo htmlspecialchars($review_error); ?></div>
+                    <?php endif; ?>
+                    
+                    <?php if (empty($reviews)): ?>
+                        <p class="no-reviews">No reviews yet. Be the first to review this game!</p>
+                    <?php else: ?>
+                        <?php foreach ($reviews as $review): ?>
+                            <?php 
+                            $is_own_review = $review['fk_user'] == $currentUser->getId();
+                            $can_delete = $is_own_review || $currentUser->isAdmin();
+                            $is_editing = isset($_GET['edit_review']) && $_GET['edit_review'] == $review['id'];
+                            ?>
+                            
+                            <?php if ($is_editing): ?>
+                            <div class="review-item review-edit-mode">
+                                <h4>Edit Your Review</h4>
+                                <form method="post" class="review-form">
+                                    <input type="hidden" name="review_id" value="<?php echo $review['id']; ?>">
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="recommended" value="1" <?php echo $review['recommended'] ? 'checked' : ''; ?>>
+                                            <span class="checkbox-text">
+                                                <i class="fas fa-thumbs-up"></i> I recommend this game
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea name="review_text" class="form-control" rows="5" required><?php echo htmlspecialchars($review['text']); ?></textarea>
+                                    </div>
+                                    <div class="review-actions">
+                                        <button type="submit" name="edit_review" class="btn btn-primary">Save Changes</button>
+                                        <a href="product.php?id=<?php echo $game_id; ?>" class="btn btn-secondary">Cancel</a>
+                                    </div>
+                                </form>
+                            </div>
+                            <?php else: ?>
+                            <div class="review-item">
+                                <div class="review-header">
+                                    <div class="review-author">
+                                        <i class="fas fa-user-circle"></i>
+                                        <span class="username"><?php echo htmlspecialchars($review['username']); ?></span>
+                                        <?php if ($is_own_review): ?>
+                                            <span class="review-owner-badge">You</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="review-meta">
+                                        <?php if ($review['recommended']): ?>
+                                            <span class="review-badge recommended">
+                                                <i class="fas fa-thumbs-up"></i> Recommended
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="review-badge not-recommended">
+                                                <i class="fas fa-thumbs-down"></i> Not Recommended
+                                            </span>
+                                        <?php endif; ?>
+                                        <span class="review-date"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></span>
+                                    </div>
+                                </div>
+                                <div class="review-content">
+                                    <?php echo nl2br(htmlspecialchars($review['text'])); ?>
+                                </div>
+                                <?php if ($can_delete): ?>
+                                <div class="review-actions">
+                                    <?php if ($is_own_review): ?>
+                                        <a href="product.php?id=<?php echo $game_id; ?>&edit_review=<?php echo $review['id']; ?>" class="btn-review-action btn-edit">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    <?php endif; ?>
+                                    <form method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this review?');">
+                                        <input type="hidden" name="review_id" value="<?php echo $review['id']; ?>">
+                                        <button type="submit" name="delete_review" class="btn-review-action btn-delete">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

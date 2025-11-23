@@ -390,6 +390,22 @@ class Game {
         try {
             $this->pdo->beginTransaction();
             
+            $imagesToDelete = [];
+            
+            if (!empty($this->cover_image) && !filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
+                $imagesToDelete[] = '../media/' . $this->cover_image;
+            }
+            
+            $stmt = $this->pdo->prepare("SELECT link FROM screenshot WHERE fk_game = ?");
+            $stmt->execute([$this->id]);
+            $screenshots = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($screenshots as $screenshot) {
+                if (!filter_var($screenshot, FILTER_VALIDATE_URL)) {
+                    $imagesToDelete[] = '../media/' . $screenshot;
+                }
+            }
+            
             // Delete related records first (due to foreign key constraints)
             $this->pdo->prepare("DELETE FROM shopping_cart WHERE fk_game = ?")->execute([$this->id]);
             $this->pdo->prepare("DELETE FROM wishlist WHERE fk_game = ?")->execute([$this->id]);
@@ -402,6 +418,16 @@ class Game {
             $result = $stmt->execute([$this->id]);
             
             $this->pdo->commit();
+            
+            // Delete image files after successful database deletion
+            if ($result) {
+                foreach ($imagesToDelete as $imagePath) {
+                    if (file_exists($imagePath)) {
+                        @unlink($imagePath);
+                    }
+                }
+            }
+            
             return $result;
         } catch (Exception $e) {
             $this->pdo->rollback();
