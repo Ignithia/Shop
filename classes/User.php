@@ -30,7 +30,7 @@ class User {
     public function getUsername() { return $this->username; }
     public function getEmail() { return $this->email; }
     public function getAvatar() { return $this->avatar; }
-    public function getBalance() { return $this->balance; }
+    public function getBalance() { return $this->balance * 100; }
     public function getBalanceInCoins() { return $this->balance * 100; }
     public function getFormattedBalanceCoins() { return number_format($this->getBalanceInCoins(), 0) . ' coins'; }
     public function getJoindate() { return $this->joindate; }

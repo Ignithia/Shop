@@ -45,9 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $pdo->beginTransaction();
             $transaction_started = true;
             
-            // Process each game purchase
             foreach ($cart_items as $game) {
-                $currentUser->purchaseGame($game['id'], $game['price'] * 100);
+                $currentUser->purchaseGame($game['id'], $game['price']);
             }
             
             // Clear cart after successful purchase

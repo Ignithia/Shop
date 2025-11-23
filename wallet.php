@@ -42,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
         if ($amount <= 0 || $amount > 100000) {
             $error_message = 'Please enter a valid amount between 1 and 100,000 coins.';
         } else {
-            if ($currentUser->addBalanceFromCoins($amount)) {
-                $success_message = "Successfully added {$amount} coins to your wallet!";
+            $dollars = $amount / 100;
+            if ($currentUser->addBalance($dollars)) {
+                $success_message = "Successfully added " . number_format($amount) . " coins to your wallet!";
             } else {
                 $error_message = 'Error adding coins. Please try again.';
             }
