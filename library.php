@@ -167,14 +167,21 @@ foreach ($categories_data as $category) {
                                 <?php foreach ($category_games as $game): ?>
                                     <div class="game-card library-card">
                                         <a href="product.php?id=<?php echo $game['id']; ?>">
-                                            <a href="product.php?id=<?php echo $game['id']; ?>">
                                                 <?php 
-                                                    $game_obj = new Game($pdo);
-                                                    $game_obj->loadById($game['id']);
-                                                    $screenshots = $game_obj->getScreenshots();
-                                                    $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                                                    if (!empty($game['cover_image'])) {
+                                                        if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
+                                                            $image_url = $game['cover_image'];
+                                                        } else {
+                                                            $image_url = './media/' . $game['cover_image'];
+                                                        }
+                                                    } else {
+                                                        $image_url = null;
+                                                    }
                                                 ?>
-                                                <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image"></a>
+                                                <?php if ($image_url): ?>
+                                                    <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
+                                                <?php endif; ?>
+                                            </a>
                                         <div class="game-info">
                                             <h4 class="game-title">
                                                 <a href="product.php?id=<?php echo $game['id']; ?>">

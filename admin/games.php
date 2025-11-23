@@ -38,16 +38,78 @@ if (($_POST['action'] ?? '') === 'add_game') {
     $categoryId = intval($_POST['category_id']);
     $sale = isset($_POST['sale']);
     $percentageId = $sale ? intval($_POST['percentage_id']) : null;
+    $coverImage = null;
     
-    $game = new Game($pdo);
-    if ($game->create($name, $description, $price, $releaseDate, $categoryId, $sale, $percentageId)) {
-        // Add screenshot if provided
-        if (!empty($_POST['screenshot_url'])) {
-            $game->addScreenshot($_POST['screenshot_url']);
+    $sanitizedName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $name);
+    $sanitizedName = preg_replace('/_+/', '_', $sanitizedName);
+    $sanitizedName = trim($sanitizedName, '_');
+    
+    // Check for uploaded cover file
+    if (isset($_FILES['cover_file']) && $_FILES['cover_file']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = '../media/';
+        $fileExtension = strtolower(pathinfo($_FILES['cover_file']['name'], PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        
+        if (in_array($fileExtension, $allowedExtensions)) {
+            $fileName = $sanitizedName . '.' . $fileExtension;
+            $targetPath = $uploadDir . $fileName;
+            
+            if (move_uploaded_file($_FILES['cover_file']['tmp_name'], $targetPath)) {
+                $coverImage = $fileName;
+            }
         }
+    }
+    
+    // If no file uploaded, check for cover URL
+    if (!$coverImage && !empty($_POST['cover_url'])) {
+        $coverImage = $_POST['cover_url'];
+    }
+    
+    // Validate cover image is provided
+    if (!$coverImage) {
+        $error = 'Cover image is required. Please upload a file or provide a URL.';
+    } else {
+    $game = new Game($pdo);
+    if ($game->create($name, $description, $price, $releaseDate, $categoryId, $sale, $percentageId, $coverImage)) {
+        // Handle multiple screenshots
+        if (isset($_FILES['screenshot_files'])) {
+            $uploadDir = '../media/';
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $screenshotCounter = 1;
+            
+            // Handle multiple uploaded files
+            foreach ($_FILES['screenshot_files']['tmp_name'] as $key => $tmpName) {
+                if ($_FILES['screenshot_files']['error'][$key] === UPLOAD_ERR_OK) {
+                    $fileExtension = strtolower(pathinfo($_FILES['screenshot_files']['name'][$key], PATHINFO_EXTENSION));
+                    
+                    if (in_array($fileExtension, $allowedExtensions)) {
+                        $fileName = $sanitizedName . '_screenshot' . $screenshotCounter . '.' . $fileExtension;
+                        $targetPath = $uploadDir . $fileName;
+                        
+                        if (move_uploaded_file($tmpName, $targetPath)) {
+                            $game->addScreenshot($fileName);
+                            $screenshotCounter++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Handle screenshot URLs (multiple, one per line)
+        if (!empty($_POST['screenshot_urls'])) {
+            $urls = explode("\n", trim($_POST['screenshot_urls']));
+            foreach ($urls as $url) {
+                $url = trim($url);
+                if (!empty($url)) {
+                    $game->addScreenshot($url);
+                }
+            }
+        }
+        
         $message = 'Game added successfully!';
     } else {
         $error = 'Failed to add game.';
+    }
     }
 }
 
@@ -200,7 +262,7 @@ $pageTitle = 'Game Management';
                     <h5 class="m-0"><i class="fas fa-plus-circle"></i> Add New Game</h5>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="add_game">
                         <div class="row">
                             <div class="col-md-6">
@@ -217,8 +279,14 @@ $pageTitle = 'Game Management';
                                     <input type="date" class="form-control" name="release_date" value="<?= date('Y-m-d') ?>" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Screenshot URL</label>
-                                    <input type="url" class="form-control" name="screenshot_url" placeholder="https://example.com/image.jpg">
+                                    <label><i class="fas fa-image"></i> Cover Image (Upload File) *</label>
+                                    <input type="file" class="form-control-file" name="cover_file" accept="image/jpeg,image/png,image/gif,image/webp">
+                                    <small class="form-text text-muted">Main store banner/thumbnail (required)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Cover Image URL (Alternative) *</label>
+                                    <input type="url" class="form-control" name="cover_url" placeholder="https://example.com/cover.jpg">
+                                    <small class="form-text text-muted">Required if no file uploaded</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -250,6 +318,21 @@ $pageTitle = 'Game Management';
                         <div class="form-group">
                             <label>Description</label>
                             <textarea class="form-control" name="description" rows="4" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><i class="fas fa-images"></i> Screenshots (Upload Multiple)</label>
+                                    <input type="file" class="form-control-file" name="screenshot_files[]" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                                    <small class="form-text text-muted">Select multiple images for game gallery</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Screenshot URLs (One per line)</label>
+                                    <textarea class="form-control" name="screenshot_urls" rows="3" placeholder="https://example.com/screenshot1.jpg&#10;https://example.com/screenshot2.jpg"></textarea>
+                                </div>
+                            </div>
                         </div>
                         <div class="d-flex justify-content-end">
                             <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Create Game</button>
@@ -310,20 +393,19 @@ $pageTitle = 'Game Management';
                                 <?php
                                 $gameObj = new Game($pdo);
                                 $gameObj->loadById($gameRow['id']);
-                                $screenshots = $gameObj->getScreenshots();
                                 ?>
                                 <div class="admin-game-item">
                                     <div class="admin-game-row">
                                         <div class="admin-game-info">
-                                            <?php 
-                                            
-                                            $image_url = '../media/default-game.jpg';
-                                            if (!empty($screenshots)) {
-                                                $image_url = str_replace('./', '../', $screenshots[0]);
-                                            }
-                                            ?>
-                                            <?php if (!empty($screenshots)): ?>
-                                                <img src="<?= htmlspecialchars($image_url) ?>" alt="<?= htmlspecialchars($gameRow['name']) ?>" class="admin-game-thumb">
+                                            <?php if (!empty($gameRow['cover_image'])): ?>
+                                                <?php
+                                                if (filter_var($gameRow['cover_image'], FILTER_VALIDATE_URL)) {
+                                                    $image_url = $gameRow['cover_image'];
+                                                } else {
+                                                    $image_url = '../media/' . $gameRow['cover_image'];
+                                                }
+                                                ?>
+                                                <img src="<?= htmlspecialchars($image_url) ?>" adlt="<?= htmlspecialchars($gameRow['name']) ?>" class="admin-game-thumb">
                                             <?php else: ?>
                                                 <div class="admin-game-thumb-placeholder">
                                                     <i class="fas fa-gamepad"></i>

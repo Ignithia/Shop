@@ -18,6 +18,7 @@ class Game {
     private $category_name;
     private $sale_percentage;
     private $original_price;
+    private $cover_image;
     private $screenshots;
     
     public function __construct($pdo = null) {
@@ -36,6 +37,7 @@ class Game {
     public function getCategoryName() { return $this->category_name; }
     public function getSalePercentage() { return $this->sale_percentage; }
     public function getOriginalPrice() { return $this->original_price; }
+    public function getCoverImage() { return $this->cover_image; }
     public function getScreenshots() { return $this->screenshots; }
     
     // Setters
@@ -45,6 +47,7 @@ class Game {
     public function setReleaseDate($date) { $this->release_date = $date; }
     public function setSale($sale) { $this->sale = $sale; }
     public function setCategoryId($categoryId) { $this->fk_category = $categoryId; }
+    public function setCoverImage($coverImage) { $this->cover_image = $coverImage; }
     
     /**
      * Load game by ID
@@ -105,18 +108,19 @@ class Game {
     /**
      * Create new game
      */
-    public function create($name, $description, $price, $releaseDate, $categoryId, $sale = false, $percentageId = null) {
+    public function create($name, $description, $price, $releaseDate, $categoryId, $sale = false, $percentageId = null, $coverImage) {
         if (!$this->pdo) return false;
         
         $stmt = $this->pdo->prepare("
-            INSERT INTO game (name, description, price, release_date, sale, fk_percentage, fk_category) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO game (name, description, cover_image, price, release_date, sale, fk_percentage, fk_category) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
-        if ($stmt->execute([$name, $description, $price, $releaseDate, $sale, $percentageId, $categoryId])) {
+        if ($stmt->execute([$name, $description, $coverImage, $price, $releaseDate, $sale, $percentageId, $categoryId])) {
             $this->id = $this->pdo->lastInsertId();
             $this->name = $name;
             $this->description = $description;
+            $this->cover_image = $coverImage;
             $this->price = $price;
             $this->release_date = $releaseDate;
             $this->sale = $sale;
@@ -135,13 +139,14 @@ class Game {
         
         $stmt = $this->pdo->prepare("
             UPDATE game 
-            SET name = ?, description = ?, price = ?, release_date = ?, sale = ?, fk_percentage = ?, fk_category = ?
+            SET name = ?, description = ?, cover_image = ?, price = ?, release_date = ?, sale = ?, fk_percentage = ?, fk_category = ?
             WHERE id = ?
         ");
         
         return $stmt->execute([
             $this->name,
             $this->description,
+            $this->cover_image,
             $this->price,
             $this->release_date,
             $this->sale,
@@ -421,6 +426,7 @@ class Game {
         
         $name = trim($productData['name']);
         $description = trim($productData['description'] ?? '');
+        $coverImage = trim($productData['cover_image'] ?? '');
         $price = floatval($productData['price']);
         $releaseDate = $productData['release_date'] ?? date('Y-m-d');
         $categoryId = intval($productData['category_id']);
@@ -432,6 +438,15 @@ class Game {
             return [
                 'success' => false,
                 'message' => 'Price must be greater than 0',
+                'game_id' => null
+            ];
+        }
+        
+        // Validate cover image
+        if (empty($coverImage)) {
+            return [
+                'success' => false,
+                'message' => 'Cover image is required',
                 'game_id' => null
             ];
         }
@@ -460,7 +475,7 @@ class Game {
         
         // Create new game object
         $game = new Game($pdo);
-        if ($game->create($name, $description, $price, $releaseDate, $categoryId, $sale, $percentageId)) {
+        if ($game->create($name, $description, $price, $releaseDate, $categoryId, $sale, $percentageId, $coverImage)) {
             return [
                 'success' => true,
                 'message' => 'Product added successfully',

@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `webshop`.`game` (
     `id` INT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(340) NOT NULL,
     `description` TEXT NOT NULL,
+    `cover_image` VARCHAR(255) NOT NULL,
     `price` DECIMAL(10,2) NOT NULL,
     `release_date` DATE NOT NULL,
     `sale` BOOLEAN NOT NULL,

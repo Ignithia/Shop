@@ -138,10 +138,15 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                     <div class="game-image-container">
                         <a href="product.php?id=<?php echo $game['id']; ?>">
                             <?php 
-                            $game_obj = new Game($pdo);
-                            $game_obj->loadById($game['id']);
-                            $screenshots = $game_obj->getScreenshots();
-                            $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                            if (!empty($game['cover_image'])) {
+                                if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
+                                    $image_url = $game['cover_image'];
+                                } else {
+                                    $image_url = './media/' . $game['cover_image'];
+                                }
+                            } else {
+                                $image_url = null;
+                            }
                             ?>
                             <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
                         </a>
@@ -192,10 +197,14 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                         
                         <div class="game-pricing">
                             <?php if ($game['sale'] && $game['sale_percentage'] > 0): ?>
-                                <span class="original-price"><?php echo $game_obj->getFormattedOriginalPrice(); ?></span>
-                                <span class="sale-price"><?php echo $game_obj->getFormattedPrice(); ?></span>
+                                <?php 
+                                $original_price = $game['price'];
+                                $sale_price = $game['price'] * (1 - $game['sale_percentage'] / 100);
+                                ?>
+                                <span class="original-price">$<?php echo number_format($original_price, 2); ?></span>
+                                <span class="sale-price">$<?php echo number_format($sale_price, 2); ?></span>
                             <?php else: ?>
-                                <div class="game-price"><?php echo $game_obj->getFormattedPrice(); ?></div>
+                                <div class="game-price">$<?php echo number_format($game['price'], 2); ?></div>
                             <?php endif; ?>
                         </div>
                         

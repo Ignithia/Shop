@@ -108,12 +108,19 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                             <?php foreach ($cart_items as $game): ?>
                                 <div class="order-item">
                                     <?php 
-                                    $game_obj = new Game($pdo);
-                                    $game_obj->loadById($game['id']);
-                                    $screenshots = $game_obj->getScreenshots();
-                                    $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                                    if (!empty($game['cover_image'])) {
+                                        if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
+                                            $image_url = $game['cover_image'];
+                                        } else {
+                                            $image_url = './media/' . $game['cover_image'];
+                                        }
+                                    } else {
+                                        $image_url = null;
+                                    }
                                     ?>
-                                    <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="item-image">
+                                    <?php if ($image_url): ?>
+                                        <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="item-image">
+                                    <?php endif; ?>
                                     <div class="item-info">
                                         <h4><?php echo htmlspecialchars($game['name']); ?></h4>
                                         <p><?php echo htmlspecialchars($game['category_name'] ?? 'Unknown'); ?></p>

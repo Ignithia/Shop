@@ -95,12 +95,20 @@ foreach ($cart_games as $game) {
                         <?php foreach ($cart_games as $game): ?>
                             <div class="cart-item">
                                 <?php 
-                                $game_obj = new Game($pdo);
-                                $game_obj->loadById($game['id']);
-                                $screenshots = $game_obj->getScreenshots();
-                                $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                                // Get cover image
+                                if (!empty($game['cover_image'])) {
+                                    if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
+                                        $image_url = $game['cover_image'];
+                                    } else {
+                                        $image_url = './media/' . $game['cover_image'];
+                                    }
+                                } else {
+                                    $image_url = null;
+                                }
                                 ?>
-                                <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="cart-item-image">
+                                <?php if ($image_url): ?>
+                                    <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="cart-item-image">
+                                <?php endif; ?>
                                 <div class="cart-item-info">
                                     <h3 class="cart-item-title">
                                         <a href="product.php?id=<?php echo $game['id']; ?>">

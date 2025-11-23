@@ -61,9 +61,21 @@ $user_owns_game = $currentUser->ownsGame($game_id);
                     <?php endif; ?>
                     <?php 
                     $screenshots = $game->getScreenshots();
-                    $image_url = !empty($screenshots) ? $screenshots[0] : './media/default-game.jpg';
+                    
+                    // Get cover image
+                    if (!empty($game->getCoverImage())) {
+                        if (filter_var($game->getCoverImage(), FILTER_VALIDATE_URL)) {
+                            $image_url = $game->getCoverImage();
+                        } else {
+                            $image_url = './media/' . $game->getCoverImage();
+                        }
+                    } else {
+                        $image_url = null;
+                    }
                     ?>
-                    <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game->getName()); ?>">
+                    <?php if ($image_url): ?>
+                        <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game->getName()); ?>">
+                    <?php endif; ?>
                 </div>
                 <div class="product-info">
                     <h1 class="product-title"><?php echo htmlspecialchars($game->getName()); ?></h1>
@@ -135,12 +147,20 @@ $user_owns_game = $currentUser->ownsGame($game_id);
                     <?php foreach ($related_games as $related_game): ?>
                         <div class="game-card">
                             <?php 
-                            $related_game_obj = new Game($pdo);
-                            $related_game_obj->loadById($related_game['id']);
-                            $related_screenshots = $related_game_obj->getScreenshots();
-                            $related_image_url = !empty($related_screenshots) ? $related_screenshots[0] : './media/default-game.jpg';
+                            // Get cover image for related game
+                            if (!empty($related_game['cover_image'])) {
+                                if (filter_var($related_game['cover_image'], FILTER_VALIDATE_URL)) {
+                                    $related_image_url = $related_game['cover_image'];
+                                } else {
+                                    $related_image_url = './media/' . $related_game['cover_image'];
+                                }
+                            } else {
+                                $related_image_url = null;
+                            }
                             ?>
-                            <img src="<?php echo htmlspecialchars($related_image_url); ?>" alt="<?php echo htmlspecialchars($related_game['name']); ?>" class="game-image">
+                            <?php if ($related_image_url): ?>
+                                <img src="<?php echo htmlspecialchars($related_image_url); ?>" alt="<?php echo htmlspecialchars($related_game['name']); ?>" class="game-image">
+                            <?php endif; ?>
                             <div class="game-info">
                                 <h4 class="game-title"><?php echo htmlspecialchars($related_game['name']); ?></h4>
                                 <div class="game-price">$<?php echo number_format($related_game['price'], 2); ?></div>
