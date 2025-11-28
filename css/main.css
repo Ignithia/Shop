@@ -1237,6 +1237,7 @@ body::before {
   height: 200px;
   object-fit: cover;
   border-bottom: 1px solid var(--border-color);
+  display: block;
 }
 
 .game-info {
@@ -1404,6 +1405,7 @@ body::before {
   object-fit: cover;
   border-radius: 10px;
   background: var(--bg-secondary);
+  display: block;
 }
 
 .product-thumbnails {
@@ -1446,6 +1448,7 @@ body::before {
   border: 2px solid transparent;
   transition: all 0.3s ease;
   flex-shrink: 0;
+  display: block;
 }
 
 .thumbnail-item:hover {
@@ -1990,6 +1993,7 @@ body::before {
   height: 60px;
   object-fit: cover;
   border-radius: 5px;
+  display: block;
 }
 
 .cart-item-title a {
