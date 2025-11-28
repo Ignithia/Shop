@@ -247,11 +247,7 @@ if ($user_owns_game) {
                             <button class="btn-owned" disabled>Already Owned ✓</button>
                             <a href="library.php" class="btn btn-secondary">View in Library</a>
                         <?php else: ?>
-                            <form method="post" action="cart.php" style="display: inline;">
-                                <input type="hidden" name="action" value="add">
-                                <input type="hidden" name="game_id" value="<?php echo $game->getId(); ?>">
-                                <button type="submit" class="btn btn-primary">Add to Cart</button>
-                            </form>
+                            <button type="button" class="btn btn-primary ajax-add-cart" data-game-id="<?php echo $game->getId(); ?>">Add to Cart</button>
                             <a href="checkout.php" class="btn card-btn">Buy Now</a>
                         <?php endif; ?>
                     </div>
@@ -470,6 +466,51 @@ if ($user_owns_game) {
         container.scrollBy({
             left: direction * scrollAmount,
             behavior: 'smooth'
+        });
+    }
+    
+    // AJAX Add to Cart
+    const addCartBtn = document.querySelector('.ajax-add-cart');
+    if (addCartBtn) {
+        addCartBtn.addEventListener('click', function() {
+            const gameId = this.getAttribute('data-game-id');
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = 'Adding...';
+            
+            fetch('ajax_handler.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'action=add_to_cart&game_id=' + gameId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = '✓ Added to Cart!';
+                    
+                    // Update cart count in header
+                    const cartBadge = document.querySelector('.cart-link');
+                    if (cartBadge && data.cart_count) {
+                        cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
+                    }
+                    
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        this.disabled = false;
+                    }, 2000);
+                } else {
+                    this.textContent = 'Failed';
+                    this.disabled = false;
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.textContent = originalText;
+                this.disabled = false;
+            });
         });
     }
     </script>

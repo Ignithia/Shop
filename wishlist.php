@@ -199,9 +199,20 @@ foreach ($user_wishlist as $game) {
                             
                             <div class="item-image">
                                 <a href="product.php?id=<?= $game['id'] ?>">
-                                    <img src="./media/<?= $game['cover_image'] ?? 'placeholder.jpg' ?>" 
+                                    <?php 
+                                    if (!empty($game['cover_image'])) {
+                                        if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
+                                            $image_url = $game['cover_image'];
+                                        } else {
+                                            $image_url = './media/' . $game['cover_image'];
+                                        }
+                                    } else {
+                                        $image_url = './media/placeholder.jpg';
+                                    }
+                                    ?>
+                                    <img src="<?= htmlspecialchars($image_url) ?>" 
                                          alt="<?= htmlspecialchars($game['name']) ?>"
-                                         onerror="this.src='media/placeholder.jpg'">
+                                         onerror="this.src='./media/placeholder.jpg'">
                                 </a>
                             </div>
                             

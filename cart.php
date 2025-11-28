@@ -122,13 +122,9 @@ foreach ($cart_games as $game) {
                                     <div class="game-price"><?php echo number_format($game['price'] * 100); ?> coins</div>
                                 </div>
                                 <div class="cart-item-actions">
-                                    <form method="post" style="display: inline;">
-                                        <input type="hidden" name="action" value="remove">
-                                        <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
-                                        <button type="submit" class="btn-remove" onclick="return confirm('Remove this game from cart?')">
-                                            Remove
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-remove ajax-remove-cart" data-game-id="<?php echo $game['id']; ?>">
+                                        Remove
+                                    </button>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -167,5 +163,57 @@ foreach ($cart_games as $game) {
         </div>
     </div>
     <?php include './inc/footer.inc.php'; ?>
+    
+    <script>
+    // AJAX Remove from Cart
+    document.querySelectorAll('.ajax-remove-cart').forEach(button => {
+        button.addEventListener('click', function() {
+            if (!confirm('Remove this game from cart?')) return;
+            
+            const gameId = this.getAttribute('data-game-id');
+            const cartItem = this.closest('.cart-item');
+            
+            fetch('ajax_handler.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'action=remove_from_cart&game_id=' + gameId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove item with animation
+                    cartItem.style.opacity = '0';
+                    setTimeout(() => {
+                        cartItem.remove();
+                        
+                        // Update cart count in header
+                        const cartBadge = document.querySelector('.cart-link');
+                        if (cartBadge) {
+                            cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
+                        }
+                        
+                        // Update totals
+                        const itemCount = document.querySelector('.summary-row span');
+                        if (itemCount) {
+                            itemCount.textContent = 'Items (' + data.cart_count + '):';
+                        }
+                        
+                        const totalElements = document.querySelectorAll('.summary-row span:last-child');
+                        if (totalElements.length >= 2) {
+                            totalElements[0].textContent = data.total_price + ' coins';
+                            totalElements[2].textContent = data.total_price + ' coins';
+                        }
+                        
+                        // If cart is empty, reload page to show empty cart message
+                        if (data.is_empty) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+    </script>
 </body>
 </html>
