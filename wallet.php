@@ -100,21 +100,21 @@ function formatCoins($amount) {
                     <div class="coin-packages">
                         <div class="coin-package">
                             <div class="package-coins">1,000 coins</div>
-                            <div class="package-price">$10.00</div>
+                            <div class="package-price">10.00 EUR</div>
                             <div class="package-bonus">Best Value!</div>
                             <button type="button" class="btn btn-primary ajax-add-coins" data-amount="1000">Purchase</button>
                         </div>
                         
                         <div class="coin-package">
                             <div class="package-coins">500 coins</div>
-                            <div class="package-price">$5.00</div>
+                            <div class="package-price">5.00 EUR</div>
                             <div class="package-bonus">Popular</div>
                             <button type="button" class="btn btn-primary ajax-add-coins" data-amount="500">Purchase</button>
                         </div>
                         
                         <div class="coin-package">
                             <div class="package-coins">100 coins</div>
-                            <div class="package-price">$1.00</div>
+                            <div class="package-price">1.00 EUR</div>
                             <div class="package-bonus">Starter</div>
                             <button type="button" class="btn btn-primary ajax-add-coins" data-amount="100">Purchase</button>
                         </div>
@@ -199,13 +199,13 @@ function formatCoins($amount) {
                     <h2>💱 Exchange Info</h2>
                     <div class="exchange-info">
                         <div class="exchange-item">
-                            <span class="rate">1 coin = $0.01 USD</span>
+                            <span class="rate">1 coin = 0.01 EUR</span>
                         </div>
                         <div class="exchange-item">
-                            <span class="rate">100 coins = $1.00 USD</span>
+                            <span class="rate">100 coins = 1.00 EUR</span>
                         </div>
                         <div class="exchange-item">
-                            <span class="rate">1,000 coins = $10.00 USD</span>
+                            <span class="rate">1,000 coins = 10.00 EUR</span>
                         </div>
                     </div>
                     <p class="exchange-note">All transactions are secure and processed instantly.</p>
@@ -249,7 +249,7 @@ function formatCoins($amount) {
                         // Update balance display
                         const balanceDisplay = document.querySelector('.balance-amount-large');
                         if (balanceDisplay) {
-                            balanceDisplay.textContent = '⭐ ' + data.new_balance + ' coins';
+                            balanceDisplay.textContent = '🪙 ' + data.new_balance + ' coins';
                         }
                         
                         const statValue = document.querySelector('.stat-value');
