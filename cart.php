@@ -1,4 +1,5 @@
 <?php
+// Include required classes
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
@@ -33,9 +34,8 @@ if (isset($_GET['logout']) && $_GET['logout'] === '1') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $game_id = (int)($_POST['game_id'] ?? 0);
-    
+
     if ($action === 'add' && $game_id > 0) {
-        // Check if user already owns this game
         if (!$currentUser->ownsGame($game_id)) {
             $currentUser->addToCart($game_id);
         }
@@ -51,8 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'clear') {
         $currentUser->clearCart();
     }
-    
-    // Redirect to prevent form resubmission
+
     header('Location: cart.php');
     exit();
 }
@@ -67,12 +66,14 @@ foreach ($cart_games as $game) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
     <?php include './inc/header.inc.php'; ?>
 
@@ -94,8 +95,7 @@ foreach ($cart_games as $game) {
                     <div class="cart-items">
                         <?php foreach ($cart_games as $game): ?>
                             <div class="cart-item">
-                                <?php 
-                                // Get cover image
+                                <?php
                                 if (!empty($game['cover_image'])) {
                                     if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
                                         $image_url = $game['cover_image'];
@@ -145,7 +145,7 @@ foreach ($cart_games as $game) {
                                 <span>Total:</span>
                                 <span><?php echo number_format($total_price); ?> coins</span>
                             </div>
-                            
+
                             <div class="cart-actions">
                                 <a href="checkout.php" class="btn btn-primary">Proceed to Checkout</a>
                                 <form method="post">
@@ -163,57 +163,56 @@ foreach ($cart_games as $game) {
         </div>
     </div>
     <?php include './inc/footer.inc.php'; ?>
-    
+
     <script>
-    // AJAX Remove from Cart
-    document.querySelectorAll('.ajax-remove-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            if (!confirm('Remove this game from cart?')) return;
-            
-            const gameId = this.getAttribute('data-game-id');
-            const cartItem = this.closest('.cart-item');
-            
-            fetch('ajax_handler.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'action=remove_from_cart&game_id=' + gameId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Remove item with animation
-                    cartItem.style.opacity = '0';
-                    setTimeout(() => {
-                        cartItem.remove();
-                        
-                        // Update cart count in header
-                        const cartBadge = document.querySelector('.cart-link');
-                        if (cartBadge) {
-                            cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
+        // AJAX Remove from Cart
+        document.querySelectorAll('.ajax-remove-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!confirm('Remove this game from cart?')) return;
+
+                const gameId = this.getAttribute('data-game-id');
+                const cartItem = this.closest('.cart-item');
+
+                fetch('ajax_handler.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'action=remove_from_cart&game_id=' + gameId
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            cartItem.style.opacity = '0';
+                            setTimeout(() => {
+                                cartItem.remove();
+
+                                const cartBadge = document.querySelector('.cart-link');
+                                if (cartBadge) {
+                                    cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
+                                }
+
+                                const itemCount = document.querySelector('.summary-row span');
+                                if (itemCount) {
+                                    itemCount.textContent = 'Items (' + data.cart_count + '):';
+                                }
+
+                                const totalElements = document.querySelectorAll('.summary-row span:last-child');
+                                if (totalElements.length >= 2) {
+                                    totalElements[0].textContent = data.total_price + ' coins';
+                                    totalElements[2].textContent = data.total_price + ' coins';
+                                }
+
+                                if (data.is_empty) {
+                                    window.location.reload();
+                                }
+                            }, 300);
                         }
-                        
-                        // Update totals
-                        const itemCount = document.querySelector('.summary-row span');
-                        if (itemCount) {
-                            itemCount.textContent = 'Items (' + data.cart_count + '):';
-                        }
-                        
-                        const totalElements = document.querySelectorAll('.summary-row span:last-child');
-                        if (totalElements.length >= 2) {
-                            totalElements[0].textContent = data.total_price + ' coins';
-                            totalElements[2].textContent = data.total_price + ' coins';
-                        }
-                        
-                        // If cart is empty, reload page to show empty cart message
-                        if (data.is_empty) {
-                            window.location.reload();
-                        }
-                    }, 300);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
         });
-    });
     </script>
 </body>
+
 </html>

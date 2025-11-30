@@ -1,4 +1,5 @@
 <?php
+// Include required classes
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
@@ -16,7 +17,7 @@ try {
     $db = Database::getInstance();
     $pdo = $db->getConnection();
     $currentUser = User::getCurrentUser($pdo);
-    
+
     if (!$currentUser) {
         echo json_encode(['success' => false, 'message' => 'User not found']);
         exit();
@@ -43,20 +44,19 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid game or already owned']);
         }
         break;
-        
+
     case 'remove_from_cart':
         $game_id = intval($_POST['game_id'] ?? 0);
         if ($game_id > 0) {
             $success = $currentUser->removeFromCart($game_id);
             $cart_items = $currentUser->getShoppingCart();
             $cart_count = count($cart_items);
-            
-            // Calculate new total
+
             $total_price = 0;
             foreach ($cart_items as $game) {
                 $total_price += $game['price'] * 100;
             }
-            
+
             echo json_encode([
                 'success' => $success,
                 'message' => $success ? 'Removed from cart' : 'Failed to remove',
@@ -68,7 +68,7 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid game ID']);
         }
         break;
-        
+
     case 'add_to_wishlist':
         $game_id = intval($_POST['game_id'] ?? 0);
         if ($game_id > 0 && !$currentUser->ownsGame($game_id)) {
@@ -81,7 +81,7 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid game or already owned']);
         }
         break;
-        
+
     case 'remove_from_wishlist':
         $game_id = intval($_POST['game_id'] ?? 0);
         if ($game_id > 0) {
@@ -94,7 +94,7 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid game ID']);
         }
         break;
-        
+
     case 'add_coins':
         $amount = intval($_POST['coin_amount'] ?? 0);
         if ($amount > 0 && $amount <= 100000) {
@@ -110,46 +110,46 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Invalid amount']);
         }
         break;
-        
+
     case 'search_games':
         $query = $_GET['query'] ?? '';
         $category = $_GET['category'] ?? '';
-        
+
         if (strlen($query) < 2 && empty($category)) {
             echo json_encode(['success' => false, 'message' => 'Query too short']);
             exit();
         }
-        
+
         $sql = "SELECT g.*, c.name as category_name 
                 FROM game g 
                 LEFT JOIN category c ON g.fk_category = c.id 
                 WHERE 1=1";
         $params = [];
-        
+
         if (!empty($query)) {
             $sql .= " AND (g.name LIKE ? OR g.description LIKE ?)";
             $params[] = "%$query%";
             $params[] = "%$query%";
         }
-        
+
         if (!empty($category) && $category !== 'all') {
             $sql .= " AND g.fk_category = ?";
             $params[] = intval($category);
         }
-        
+
         $sql .= " ORDER BY g.name ASC LIMIT 50";
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         echo json_encode([
             'success' => true,
             'games' => $games,
             'count' => count($games)
         ]);
         break;
-        
+
     case 'get_cart_count':
         $cart_count = count($currentUser->getShoppingCart());
         echo json_encode([
@@ -157,7 +157,7 @@ switch ($action) {
             'cart_count' => $cart_count
         ]);
         break;
-        
+
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
         break;

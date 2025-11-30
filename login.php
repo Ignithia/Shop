@@ -26,19 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     $login_input = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $remember_me = isset($_POST['remember_me']);
-    
+
     $login_result = User::login($pdo, $login_input, $password);
-    
+
     if ($login_result['success']) {
-        // Start session for the user
         User::startSession($login_result['user']);
-        
-        // Handle Remember Me functionality
+
         if ($remember_me) {
-            // Set cookie for 30 days 
             setcookie('remember_login', $login_input, time() + (30 * 24 * 60 * 60), '/');
         }
-        
+
         header('Location: index.php');
         exit();
     } else {
@@ -51,35 +48,37 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
     <div class="login-container">
         <div>
             <h1>Player Login</h1>
-            
+
             <?php if ($error_message): ?>
                 <div class="error"><?php echo htmlspecialchars($error_message); ?></div>
             <?php endif; ?>
-            
+
             <form method="POST" action="">
                 <div class="form-group">
                     <label for="email">Email or Username:</label>
-                    <input type="text" id="email" name="email" required 
-                           placeholder="Enter your email or username..."
-                           value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecialchars($remembered_email); ?>">
+                    <input type="text" id="email" name="email" required
+                        placeholder="Enter your email or username..."
+                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : htmlspecialchars($remembered_email); ?>">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="password">Password:</label>
                     <input type="password" id="password" name="password" required
-                           placeholder="Enter your password...">
+                        placeholder="Enter your password...">
                 </div>
-                
+
                 <div class="form-group checkbox-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="remember_me" name="remember_me">
@@ -87,14 +86,14 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
                         Remember me
                     </label>
                 </div>
-                
+
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
-            
+
             <div class="signup-link">
                 <p>New User? <a href="signup.php">Create Account</a></p>
             </div>
-            
+
             <div class="demo-credentials">
                 <strong>Demo Login:</strong><br>
                 Create an account or login with existing credentials<br>
@@ -103,4 +102,5 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
         </div>
     </div>
 </body>
+
 </html>

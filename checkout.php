@@ -1,4 +1,5 @@
 <?php
+// Include required classes
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
@@ -44,18 +45,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         try {
             $pdo->beginTransaction();
             $transaction_started = true;
-            
+
             foreach ($cart_items as $game) {
                 $currentUser->purchaseGame($game['id'], $game['price']);
             }
-            
-            // Clear cart after successful purchase
+
             $currentUser->clearCart();
-            
+
             $pdo->commit();
             $transaction_started = false;
-            
-            // Redirect to success page
+
             header('Location: checkout.php?success=1');
             exit();
         } catch (Exception $e) {
@@ -73,12 +72,14 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
     <?php include './inc/header.inc.php'; ?>
 
@@ -111,7 +112,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                         <div class="order-items">
                             <?php foreach ($cart_items as $game): ?>
                                 <div class="order-item">
-                                    <?php 
+                                    <?php
                                     if (!empty($game['cover_image'])) {
                                         if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
                                             $image_url = $game['cover_image'];
@@ -135,7 +136,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        
+
                         <div class="order-total">
                             <div class="total-line">
                                 <span>Subtotal:</span>
@@ -155,7 +156,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                                 <span>Your Balance:</span>
                                 <span class="balance-amount"><?php echo number_format($currentUser->getBalance()); ?> coins</span>
                             </div>
-                            
+
                             <?php if ($currentUser->getBalance() >= $total_price): ?>
                                 <div class="balance-status sufficient">
                                     ✅ Sufficient balance
@@ -175,7 +176,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
 
                         <form method="post" class="checkout-form">
                             <input type="hidden" name="action" value="purchase">
-                            
+
                             <div class="checkout-actions">
                                 <?php if ($currentUser->getBalance() >= $total_price): ?>
                                     <button type="submit" class="btn btn-primary checkout-btn">
@@ -189,7 +190,7 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
                                         Add Funds
                                     </a>
                                 <?php endif; ?>
-                                
+
                                 <a href="cart.php" class="btn btn-secondary">Back to Cart</a>
                             </div>
                         </form>
@@ -200,4 +201,5 @@ $success = isset($_GET['success']) && $_GET['success'] === '1';
     </div>
     <?php include './inc/footer.inc.php'; ?>
 </body>
+
 </html>

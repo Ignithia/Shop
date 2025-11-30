@@ -26,7 +26,7 @@ try {
     $database = Database::getInstance();
     $pdo = $database->getConnection();
     $currentUser = User::getCurrentUser($pdo);
-    
+
     if (!$currentUser) {
         header('Location: login.php');
         exit();
@@ -35,7 +35,6 @@ try {
     $error_message = 'Database connection failed. Please try again later.';
 }
 
-// Handle balance addition
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     if (isset($_POST['add_coins'])) {
         $amount = intval($_POST['coin_amount'] ?? 0);
@@ -52,21 +51,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     }
 }
 
-function formatCoins($amount) {
+function formatCoins($amount)
+{
     return number_format($amount, 0) . ' coins';
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
     <?php include 'inc/header.inc.php'; ?>
-    
+
     <div class="container">
         <div class="wallet-header">
             <h1>💰 My Wallet</h1>
@@ -96,7 +98,7 @@ function formatCoins($amount) {
                 <div class="wallet-section">
                     <h2>💎 Add Coins</h2>
                     <p class="section-description">Purchase coins to buy games and items in our store.</p>
-                    
+
                     <div class="coin-packages">
                         <div class="coin-package">
                             <div class="package-coins">1,000 coins</div>
@@ -104,14 +106,14 @@ function formatCoins($amount) {
                             <div class="package-bonus">Best Value!</div>
                             <button type="button" class="btn btn-primary ajax-add-coins" data-amount="1000">Purchase</button>
                         </div>
-                        
+
                         <div class="coin-package">
                             <div class="package-coins">500 coins</div>
                             <div class="package-price">5.00 EUR</div>
                             <div class="package-bonus">Popular</div>
                             <button type="button" class="btn btn-primary ajax-add-coins" data-amount="500">Purchase</button>
                         </div>
-                        
+
                         <div class="coin-package">
                             <div class="package-coins">100 coins</div>
                             <div class="package-price">1.00 EUR</div>
@@ -119,7 +121,7 @@ function formatCoins($amount) {
                             <button type="button" class="btn btn-primary ajax-add-coins" data-amount="100">Purchase</button>
                         </div>
                     </div>
-                    
+
                     <div class="custom-amount">
                         <h3>Custom Amount</h3>
                         <div class="coin-form">
@@ -127,9 +129,9 @@ function formatCoins($amount) {
                                 <label for="coin_amount">Amount:</label>
                                 <div class="input-with-symbol">
                                     <span class="input-symbol">⭐</span>
-                                    <input type="number" id="coin_amount" name="coin_amount" 
-                                           step="1" min="1" max="100000" 
-                                           placeholder="Enter amount" required>
+                                    <input type="number" id="coin_amount" name="coin_amount"
+                                        step="1" min="1" max="100000"
+                                        placeholder="Enter amount" required>
                                 </div>
                                 <small class="form-help">Minimum: 1 coin, Maximum: 100,000 coins</small>
                             </div>
@@ -152,7 +154,7 @@ function formatCoins($amount) {
                                 <div class="stat-value"><?php echo formatCoins($currentUser->getBalanceInCoins()); ?></div>
                             </div>
                         </div>
-                        
+
                         <div class="stat-item">
                             <div class="stat-icon">💎</div>
                             <div class="stat-details">
@@ -160,7 +162,7 @@ function formatCoins($amount) {
                                 <div class="stat-value"><?php echo formatCoins($currentUser->getTotalSpent()); ?></div>
                             </div>
                         </div>
-                        
+
                         <div class="stat-item">
                             <div class="stat-icon">🎮</div>
                             <div class="stat-details">
@@ -217,7 +219,6 @@ function formatCoins($amount) {
     <?php include 'inc/footer.inc.php'; ?>
 
     <script>
-        // Auto-hide alerts after 5 seconds
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
@@ -228,38 +229,101 @@ function formatCoins($amount) {
             });
         }, 5000);
 
-        // AJAX Coin Purchase - Package buttons
+        // Buy coins
         document.querySelectorAll('.ajax-add-coins').forEach(button => {
             button.addEventListener('click', function() {
                 const amount = this.getAttribute('data-amount');
                 const originalText = this.textContent;
                 this.disabled = true;
                 this.textContent = 'Processing...';
-                
+
                 fetch('ajax_handler.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'action=add_coins&coin_amount=' + amount
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.textContent = '✓ Added!';
+
+                            const balanceDisplay = document.querySelector('.balance-amount-large');
+                            const headerBalance = document.querySelector('.balance');
+                            if (balanceDisplay && headerBalance) {
+                                balanceDisplay.textContent = '🪙 ' + data.new_balance + ' coins';
+                                headerBalance.textContent = '🪙 ' + data.new_balance + ' coins';
+                            }
+                            const statValue = document.querySelector('.stat-value');
+                            if (statValue) {
+                                statValue.textContent = data.new_balance + ' coins';
+                            }
+
+                            showMessage(data.message, 'success');
+
+                            setTimeout(() => {
+                                this.textContent = originalText;
+                                this.disabled = false;
+                            }, 2000);
+                        } else {
+                            this.textContent = 'Failed';
+                            showMessage(data.message, 'error');
+                            setTimeout(() => {
+                                this.textContent = originalText;
+                                this.disabled = false;
+                            }, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.textContent = originalText;
+                        this.disabled = false;
+                    });
+            });
+        });
+
+        document.getElementById('ajax-add-custom-coins').addEventListener('click', function() {
+            const amountInput = document.getElementById('coin_amount');
+            const amount = parseInt(amountInput.value);
+
+            if (!amount || amount < 1 || amount > 100000) {
+                showMessage('Please enter a valid amount between 1 and 100,000 coins', 'error');
+                return;
+            }
+
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = 'Processing...';
+
+            fetch('ajax_handler.php', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: 'action=add_coins&coin_amount=' + amount
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         this.textContent = '✓ Added!';
-                        
-                        // Update balance display
+
                         const balanceDisplay = document.querySelector('.balance-amount-large');
-                        if (balanceDisplay) {
+                        const headerBalance = document.querySelector('.balance');
+                        if (balanceDisplay && headerBalance) {
                             balanceDisplay.textContent = '🪙 ' + data.new_balance + ' coins';
+                            headerBalance.textContent = '🪙 ' + data.new_balance + ' coins';
                         }
-                        
+
                         const statValue = document.querySelector('.stat-value');
                         if (statValue) {
                             statValue.textContent = data.new_balance + ' coins';
                         }
-                        
-                        // Show success message
+
                         showMessage(data.message, 'success');
-                        
+
+                        amountInput.value = '';
+
                         setTimeout(() => {
                             this.textContent = originalText;
                             this.disabled = false;
@@ -278,80 +342,17 @@ function formatCoins($amount) {
                     this.textContent = originalText;
                     this.disabled = false;
                 });
-            });
         });
-        
-        // AJAX Coin Purchase - Custom amount
-        document.getElementById('ajax-add-custom-coins').addEventListener('click', function() {
-            const amountInput = document.getElementById('coin_amount');
-            const amount = parseInt(amountInput.value);
-            
-            if (!amount || amount < 1 || amount > 100000) {
-                showMessage('Please enter a valid amount between 1 and 100,000 coins', 'error');
-                return;
-            }
-            
-            const originalText = this.textContent;
-            this.disabled = true;
-            this.textContent = 'Processing...';
-            
-            fetch('ajax_handler.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'action=add_coins&coin_amount=' + amount
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.textContent = '✓ Added!';
-                    
-                    // Update balance display
-                    const balanceDisplay = document.querySelector('.balance-amount-large');
-                    if (balanceDisplay) {
-                        balanceDisplay.textContent = '⭐ ' + data.new_balance + ' coins';
-                    }
-                    
-                    const statValue = document.querySelector('.stat-value');
-                    if (statValue) {
-                        statValue.textContent = data.new_balance + ' coins';
-                    }
-                    
-                    // Show success message
-                    showMessage(data.message, 'success');
-                    
-                    // Clear input
-                    amountInput.value = '';
-                    
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                        this.disabled = false;
-                    }, 2000);
-                } else {
-                    this.textContent = 'Failed';
-                    showMessage(data.message, 'error');
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                        this.disabled = false;
-                    }, 2000);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                this.textContent = originalText;
-                this.disabled = false;
-            });
-        });
-        
-        // Helper function to show messages
+
         function showMessage(message, type) {
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-' + type;
             alertDiv.textContent = message;
-            
+
             const container = document.querySelector('.wallet-header');
             if (container) {
                 container.after(alertDiv);
-                
+
                 setTimeout(() => {
                     alertDiv.style.opacity = '0';
                     setTimeout(() => alertDiv.remove(), 300);
@@ -360,4 +361,5 @@ function formatCoins($amount) {
         }
     </script>
 </body>
+
 </html>
