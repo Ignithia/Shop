@@ -32,7 +32,7 @@ if (isset($_GET['logout']) && $_GET['logout'] === '1') {
 // Handle the wishlist additions/removals
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wishlist_action'])) {
     $game_id = intval($_POST['game_id']);
-    
+
     if ($_POST['wishlist_action'] === 'add') {
         // Check if user owns this game - don't add if owned
         if (!$currentUser->ownsGame($game_id)) {
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wishlist_action'])) {
     } elseif ($_POST['wishlist_action'] === 'remove') {
         $currentUser->removeFromWishlist($game_id);
     }
-    
+
     // Redirect to same page to prevent form resubmission
     $redirect_url = $_SERVER['REQUEST_URI'];
     header("Location: $redirect_url");
@@ -86,12 +86,14 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gaming Store - Shop</title>
     <link rel="stylesheet" href="./css/main.css">
 </head>
+
 <body>
     <?php include './inc/header.inc.php'; ?>
 
@@ -104,13 +106,13 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
         <div class="search-section">
             <form method="GET" action="shop.php" class="search-form" id="search-form">
                 <div class="search-container">
-                    <input type="text" 
-                           id="search-input"
-                           name="search" 
-                           placeholder="Search games..." 
-                           value="<?php echo htmlspecialchars($search_query); ?>"
-                           class="search-input"
-                           autocomplete="off">
+                    <input type="text"
+                        id="search-input"
+                        name="search"
+                        placeholder="Search games..."
+                        value="<?php echo htmlspecialchars($search_query); ?>"
+                        class="search-input"
+                        autocomplete="off">
                     <?php if ($selected_category !== 'all'): ?>
                         <input type="hidden" name="category" value="<?php echo htmlspecialchars($selected_category); ?>">
                     <?php endif; ?>
@@ -128,8 +130,8 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
 
         <div class="category-nav">
             <?php foreach ($category_nav as $cat_key => $cat_name): ?>
-                <a href="?category=<?php echo $cat_key; ?>" 
-                   class="category-btn <?php echo ($selected_category === $cat_key) ? 'active' : ''; ?>">
+                <a href="?category=<?php echo $cat_key; ?>"
+                    class="category-btn <?php echo ($selected_category === $cat_key) ? 'active' : ''; ?>">
                     <?php echo $cat_name; ?>
                 </a>
             <?php endforeach; ?>
@@ -140,7 +142,7 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                 <div class="game-card">
                     <div class="game-image-container">
                         <a href="product.php?id=<?php echo $game['id']; ?>">
-                            <?php 
+                            <?php
                             if (!empty($game['cover_image'])) {
                                 if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
                                     $image_url = $game['cover_image'];
@@ -153,11 +155,11 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                             ?>
                             <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($game['name']); ?>" class="game-image">
                         </a>
-                        
+
                         <?php if ($game['sale'] && $game['sale_percentage'] > 0): ?>
                             <div class="sale-badge">-<?php echo $game['sale_percentage']; ?>%</div>
                         <?php endif; ?>
-                        
+
                         <?php if (!$currentUser->ownsGame($game['id'])): ?>
                             <div class="wishlist-overlay">
                                 <?php if (in_array($game['id'], $wishlist_game_ids)): ?>
@@ -187,20 +189,20 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                             </a>
                         </h3>
                         <p class="game-category"><?php echo htmlspecialchars($game['category_name']); ?></p>
-                        
+
                         <div class="game-badges">
-                            <?php 
+                            <?php
                             $release_date = new DateTime($game['release_date']);
                             $thirty_days_ago = new DateTime('-30 days');
-                            if ($release_date > $thirty_days_ago): 
+                            if ($release_date > $thirty_days_ago):
                             ?>
                                 <div class="new-badge-small">NEW</div>
                             <?php endif; ?>
                         </div>
-                        
+
                         <div class="game-pricing">
                             <?php if ($game['sale'] && $game['sale_percentage'] > 0): ?>
-                                <?php 
+                                <?php
                                 $original_price = $game['price'] * 100;
                                 $sale_price = $game['price'] * (1 - $game['sale_percentage'] / 100) * 100;
                                 ?>
@@ -210,26 +212,26 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                                 <div class="game-price"><?php echo number_format($game['price'] * 100, 0); ?> coins</div>
                             <?php endif; ?>
                         </div>
-                        
+
                         <div class="game-actions">
                             <?php if ($currentUser->ownsGame($game['id'])): ?>
                                 <button class="buy-btn owned" disabled>✓ Owned</button>
                             <?php else: ?>
                                 <button type="button" class="buy-btn ajax-add-cart" data-game-id="<?php echo $game['id']; ?>">Add to Cart</button>
-                                
+
                                 <?php if (in_array($game['id'], $wishlist_game_ids)): ?>
-                                    <button type="button" class="card-btn wishlist-btn in-wishlist ajax-wishlist" 
-                                            data-game-id="<?php echo $game['id']; ?>" 
-                                            data-in-wishlist="true" 
-                                            title="Remove from wishlist">
-                                        💔
+                                    <button type="button" class="card-btn wishlist-btn in-wishlist ajax-wishlist"
+                                        data-game-id="<?php echo $game['id']; ?>"
+                                        data-in-wishlist="true"
+                                        title="Remove from wishlist">
+                                        Remove from wishlist
                                     </button>
                                 <?php else: ?>
-                                    <button type="button" class="card-btn wishlist-btn ajax-wishlist" 
-                                            data-game-id="<?php echo $game['id']; ?>" 
-                                            data-in-wishlist="false" 
-                                            title="Add to wishlist">
-                                        ❤️
+                                    <button type="button" class="card-btn wishlist-btn ajax-wishlist"
+                                        data-game-id="<?php echo $game['id']; ?>"
+                                        data-in-wishlist="false"
+                                        title="Add to wishlist">
+                                        Add to wishlist
                                     </button>
                                 <?php endif; ?>
                             <?php endif; ?>
@@ -240,7 +242,7 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
             <?php endforeach; ?>
         </div>
 
-            <!-- If no games are found show this message -->
+        <!-- If no games are found show this message -->
         <?php if (empty($games)): ?>
             <div class="no-games">
                 <?php if (!empty($search_query)): ?>
@@ -255,114 +257,118 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
     </div>
 
     <?php include './inc/footer.inc.php'; ?>
-    
+
     <script>
-    document.querySelectorAll('.ajax-add-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const gameId = this.getAttribute('data-game-id');
-            const originalText = this.textContent;
-            this.disabled = true;
-            this.textContent = 'Adding...';
-            
-            fetch('ajax_handler.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'action=add_to_cart&game_id=' + gameId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.textContent = '✓ Added!';
-                    this.classList.add('success-btn');
-                    
-                    // Update cart count in header
-                    const cartBadge = document.querySelector('.cart-link');
-                    if (cartBadge && data.cart_count) {
-                        cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
-                    }
-                    
-                    setTimeout(() => {
+        document.querySelectorAll('.ajax-add-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                const gameId = this.getAttribute('data-game-id');
+                const originalText = this.textContent;
+                this.disabled = true;
+                this.textContent = 'Adding...';
+
+                fetch('ajax_handler.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'action=add_to_cart&game_id=' + gameId
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.textContent = '✓ Added!';
+                            this.classList.add('success-btn');
+
+                            // Update cart count in header
+                            const cartBadge = document.querySelector('.cart-link');
+                            if (cartBadge && data.cart_count) {
+                                cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
+                            }
+
+                            setTimeout(() => {
+                                this.textContent = originalText;
+                                this.disabled = false;
+                                this.classList.remove('success-btn');
+                            }, 2000);
+                        } else {
+                            this.textContent = 'Failed';
+                            this.disabled = false;
+                            setTimeout(() => {
+                                this.textContent = originalText;
+                            }, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
                         this.textContent = originalText;
                         this.disabled = false;
-                        this.classList.remove('success-btn');
-                    }, 2000);
-                } else {
-                    this.textContent = 'Failed';
-                    this.disabled = false;
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                    }, 2000);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                this.textContent = originalText;
-                this.disabled = false;
+                    });
             });
         });
-    });
-    
-    document.querySelectorAll('.ajax-wishlist').forEach(button => {
-        button.addEventListener('click', function() {
-            const gameId = this.getAttribute('data-game-id');
-            const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
-            const action = inWishlist ? 'remove_from_wishlist' : 'add_to_wishlist';
-            
-            fetch('ajax_handler.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'action=' + action + '&game_id=' + gameId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (inWishlist) {
-                        this.textContent = 'Add to wishlist';
-                        this.classList.remove('in-wishlist');
-                        this.setAttribute('data-in-wishlist', 'false');
-                        this.title = 'Add to wishlist';
-                    } else {
-                        this.textContent = 'Remove from wishlist';
-                        this.classList.add('in-wishlist');
-                        this.setAttribute('data-in-wishlist', 'true');
-                        this.title = 'Remove from wishlist';
-                    }
-                }
-            })
-            .catch(error => console.error('Error:', error));
+
+        document.querySelectorAll('.ajax-wishlist').forEach(button => {
+            button.addEventListener('click', function() {
+                const gameId = this.getAttribute('data-game-id');
+                const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
+                const action = inWishlist ? 'remove_from_wishlist' : 'add_to_wishlist';
+
+                fetch('ajax_handler.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'action=' + action + '&game_id=' + gameId
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (inWishlist) {
+                                this.textContent = 'Add to wishlist';
+                                this.classList.remove('in-wishlist');
+                                this.setAttribute('data-in-wishlist', 'false');
+                                this.title = 'Add to wishlist';
+                            } else {
+                                this.textContent = 'Remove from wishlist';
+                                this.classList.add('in-wishlist');
+                                this.setAttribute('data-in-wishlist', 'true');
+                                this.title = 'Remove from wishlist';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
         });
-    });
-    
-    let searchTimeout;
-    const searchInput = document.getElementById('search-input');
-    const searchResults = document.getElementById('search-results');
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-            
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
-            
-            searchTimeout = setTimeout(() => {
-                const categoryInput = document.querySelector('input[name="category"]');
-                const category = categoryInput ? categoryInput.value : 'all';
-                
-                fetch('ajax_handler.php?action=search_games&query=' + encodeURIComponent(query) + '&category=' + category)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.games.length > 0) {
-                        let html = '<div class="search-results-list">';
-                        data.games.slice(0, 5).forEach(game => {
-                            const imageUrl = game.cover_image ? 
-                                (game.cover_image.startsWith('http') ? game.cover_image : './media/' + game.cover_image) :
-                                './media/placeholder.jpg';
-                            const price = Math.round(game.price * 100);
-                            
-                            html += `
+
+        let searchTimeout;
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    const categoryInput = document.querySelector('input[name="category"]');
+                    const category = categoryInput ? categoryInput.value : 'all';
+
+                    fetch('ajax_handler.php?action=search_games&query=' + encodeURIComponent(query) + '&category=' + category)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.games.length > 0) {
+                                let html = '<div class="search-results-list">';
+                                data.games.slice(0, 5).forEach(game => {
+                                    const imageUrl = game.cover_image ?
+                                        (game.cover_image.startsWith('http') ? game.cover_image : './media/' + game.cover_image) :
+                                        './media/placeholder.jpg';
+                                    const price = Math.round(game.price * 100);
+
+                                    html += `
                                 <a href="product.php?id=\${game.id}" class="search-result-item">
                                     <img src="\${imageUrl}" alt="\${game.name}" onerror="this.src='./media/placeholder.jpg'">
                                     <div class="search-result-info">
@@ -372,34 +378,35 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                                     <div class="search-result-price">\${price.toLocaleString()} coins</div>
                                 </a>
                             `;
+                                });
+
+                                if (data.games.length > 5) {
+                                    html += `<div class="search-more">+\${data.games.length - 5} more results</div>`;
+                                }
+
+                                html += '</div>';
+                                searchResults.innerHTML = html;
+                                searchResults.style.display = 'block';
+                            } else {
+                                searchResults.innerHTML = '<div class="search-no-results">No games found</div>';
+                                searchResults.style.display = 'block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            searchResults.style.display = 'none';
                         });
-                        
-                        if (data.games.length > 5) {
-                            html += `<div class="search-more">+\${data.games.length - 5} more results</div>`;
-                        }
-                        
-                        html += '</div>';
-                        searchResults.innerHTML = html;
-                        searchResults.style.display = 'block';
-                    } else {
-                        searchResults.innerHTML = '<div class="search-no-results">No games found</div>';
-                        searchResults.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+                }, 300);
+            });
+
+            // Hide search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                     searchResults.style.display = 'none';
-                });
-            }, 300);
-        });
-        
-        // Hide search results when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
-    }
+                }
+            });
+        }
     </script>
 </body>
+
 </html>
