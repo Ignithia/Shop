@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $game_id = intval($_POST['game_id']);
         $currentUser->removeFromWishlist($game_id);
     }
-    
+
     if (isset($_POST['clear_wishlist'])) {
         // Remove all items from wishlist
         $wishlist_items = $currentUser->getWishlist();
@@ -43,27 +43,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $currentUser->removeFromWishlist($item['id']);
         }
     }
-    
+
     if (isset($_POST['add_to_wishlist'])) {
         $game_id = intval($_POST['game_id']);
         if (!$currentUser->ownsGame($game_id)) {
             $currentUser->addToWishlist($game_id);
         }
     }
-    
+
     if (isset($_POST['update_rank'])) {
         $game_id = intval($_POST['game_id']);
         $new_rank = intval($_POST['new_rank']);
         // Note: Rank updating would need additional implementation in User class
         // For now, we'll just redirect without changing rank
     }
-    
+
     if (isset($_POST['reorder_wishlist'])) {
         $new_order = json_decode($_POST['new_order'], true);
         // Note: Reordering would need additional implementation in User class
         // For now, we'll just redirect without changing order
     }
-    
+
     header('Location: wishlist.php');
     exit();
 }
@@ -74,15 +74,15 @@ $user_wishlist = $currentUser->getWishlist();
 // Handle search
 $search_query = $_GET['search'] ?? '';
 if ($search_query) {
-    $user_wishlist = array_filter($user_wishlist, function($game) use ($search_query) {
-        return stripos($game['name'], $search_query) !== false || 
-               stripos($game['category_name'], $search_query) !== false;
+    $user_wishlist = array_filter($user_wishlist, function ($game) use ($search_query) {
+        return stripos($game['name'], $search_query) !== false ||
+            stripos($game['category_name'], $search_query) !== false;
     });
 }
 
 // Handle sorting
 $sort_by = $_GET['sort'] ?? 'rank';
-usort($user_wishlist, function($a, $b) use ($sort_by) {
+usort($user_wishlist, function ($a, $b) use ($sort_by) {
     switch ($sort_by) {
         case 'price-low':
             return ($a['price'] ?? 0) <=> ($b['price'] ?? 0);
@@ -114,6 +114,7 @@ foreach ($user_wishlist as $game) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -121,6 +122,7 @@ foreach ($user_wishlist as $game) {
     <link rel="stylesheet" href="css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 </head>
+
 <body>
     <?php include './inc/header.inc.php'; ?>
 
@@ -135,11 +137,11 @@ foreach ($user_wishlist as $game) {
             <div class="wishlist-controls">
                 <div class="search-container">
                     <form method="GET" action="wishlist.php" style="display: flex; gap: 10px;">
-                        <input type="text" 
-                               name="search"
-                               value="<?= htmlspecialchars($search_query) ?>"
-                               placeholder="Search your wishlist..." 
-                               class="search-input">
+                        <input type="text"
+                            name="search"
+                            value="<?= htmlspecialchars($search_query) ?>"
+                            placeholder="Search your wishlist..."
+                            class="search-input">
                         <input type="hidden" name="sort" value="<?= htmlspecialchars($sort_by) ?>">
                         <button type="submit" class="search-btn">🔍</button>
                         <?php if ($search_query): ?>
@@ -147,7 +149,7 @@ foreach ($user_wishlist as $game) {
                         <?php endif; ?>
                     </form>
                 </div>
-                
+
                 <div class="sort-container">
                     <form method="GET" action="wishlist.php">
                         <?php if ($search_query): ?>
@@ -175,7 +177,7 @@ foreach ($user_wishlist as $game) {
                     </div>
                 <?php else: ?>
                     <?php foreach ($user_wishlist as $wishlist_item): ?>
-                        <?php 
+                        <?php
                         $game = $wishlist_item;
                         $is_owned = $currentUser->ownsGame($game['id']);
                         $can_afford = ($game['price'] * 100) <= $currentUser->getBalance();
@@ -186,20 +188,20 @@ foreach ($user_wishlist as $game) {
                                 <form method="POST" style="margin: 5px 0;">
                                     <input type="hidden" name="game_id" value="<?= $game['id'] ?>">
                                     <input type="hidden" name="update_rank" value="1">
-                                    <input type="number" 
-                                           name="new_rank"
-                                           class="rank-input" 
-                                           value="<?= $game['rank'] ?>" 
-                                           min="1" 
-                                           max="<?= count($user_wishlist) ?>"
-                                           onchange="this.form.submit()">
+                                    <input type="number"
+                                        name="new_rank"
+                                        class="rank-input"
+                                        value="<?= $game['rank'] ?>"
+                                        min="1"
+                                        max="<?= count($user_wishlist) ?>"
+                                        onchange="this.form.submit()">
                                 </form>
                                 <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
                             </div>
-                            
+
                             <div class="item-image">
                                 <a href="product.php?id=<?= $game['id'] ?>">
-                                    <?php 
+                                    <?php
                                     if (!empty($game['cover_image'])) {
                                         if (filter_var($game['cover_image'], FILTER_VALIDATE_URL)) {
                                             $image_url = $game['cover_image'];
@@ -210,12 +212,12 @@ foreach ($user_wishlist as $game) {
                                         $image_url = './media/placeholder.jpg';
                                     }
                                     ?>
-                                    <img src="<?= htmlspecialchars($image_url) ?>" 
-                                         alt="<?= htmlspecialchars($game['name']) ?>"
-                                         onerror="this.src='./media/placeholder.jpg'">
+                                    <img src="<?= htmlspecialchars($image_url) ?>"
+                                        alt="<?= htmlspecialchars($game['name']) ?>"
+                                        onerror="this.src='./media/placeholder.jpg'">
                                 </a>
                             </div>
-                            
+
                             <div class="item-info">
                                 <h4 class="item-title">
                                     <a href="product.php?id=<?= $game['id'] ?>"><?= htmlspecialchars($game['name']) ?></a>
@@ -223,7 +225,7 @@ foreach ($user_wishlist as $game) {
                                 <span class="item-category"><?= htmlspecialchars($game['category_name'] ?? 'Unknown') ?></span>
                                 <span class="item-date">Added: <?= date('M j, Y', strtotime($game['added_at'])) ?></span>
                             </div>
-                            
+
                             <div class="item-price">
                                 <?php if ($game['sale']): ?>
                                     <span class="original-price"><?= number_format(($game['original_price'] ?? $game['price']) * 100) ?> coins</span>
@@ -237,22 +239,19 @@ foreach ($user_wishlist as $game) {
                                     <small style="color: #e74c3c; display: block;">Need <?= number_format(($game['price'] * 100) - $currentUser->getBalance()) ?> more coins</small>
                                 <?php endif; ?>
                             </div>
-                            
+
                             <div class="item-actions">
                                 <?php if (!$is_owned): ?>
-                                    <form method="post" action="cart.php" style="margin-bottom: 8px;">
-                                        <input type="hidden" name="action" value="add">
-                                        <input type="hidden" name="game_id" value="<?= $game['id'] ?>">
-                                        <button type="submit" 
-                                                class="btn btn-primary" 
-                                                <?= !$can_afford ? 'disabled title="Insufficient funds"' : '' ?>>
-                                            Add to Cart
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                        class="btn btn-primary ajax-add-cart"
+                                        data-game-id="<?= $game['id'] ?>"
+                                        <?= !$can_afford ? 'disabled title="Insufficient funds"' : '' ?>>
+                                        Add to Cart
+                                    </button>
                                 <?php else: ?>
                                     <span class="btn" style="background: #27ae60; margin-bottom: 5px;">Owned</span>
                                 <?php endif; ?>
-                                
+
                                 <form method="POST" onsubmit="return confirm('Remove this game from wishlist?')">
                                     <input type="hidden" name="game_id" value="<?= $game['id'] ?>">
                                     <input type="hidden" name="remove_game" value="1">
@@ -282,7 +281,7 @@ foreach ($user_wishlist as $game) {
                             <span class="stat-label">You Can Afford</span>
                         </div>
                     </div>
-                    
+
                     <div class="bulk-actions">
                         <form method="POST" action="cart.php" style="display: inline;">
                             <input type="hidden" name="action" value="add_multiple">
@@ -295,7 +294,7 @@ foreach ($user_wishlist as $game) {
                                 🛒 Add Affordable to Cart (<?= $affordable_count ?>)
                             </button>
                         </form>
-                        
+
                         <form method="POST" style="display: inline;" onsubmit="return confirm('Clear entire wishlist? This cannot be undone.')">
                             <input type="hidden" name="clear_wishlist" value="1">
                             <button type="submit" class="btn btn-secondary">
@@ -313,7 +312,7 @@ foreach ($user_wishlist as $game) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const wishlistItems = document.getElementById('wishlist-items');
-            
+
             if (wishlistItems && wishlistItems.children.length > 0) {
                 new Sortable(wishlistItems, {
                     animation: 150,
@@ -323,22 +322,22 @@ foreach ($user_wishlist as $game) {
                     onEnd: function(evt) {
                         const items = Array.from(wishlistItems.children);
                         const newOrder = items.map(item => parseInt(item.dataset.gameId));
-                        
+
                         // Send new order to server
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.style.display = 'none';
-                        
+
                         const input1 = document.createElement('input');
                         input1.type = 'hidden';
                         input1.name = 'reorder_wishlist';
                         input1.value = '1';
-                        
+
                         const input2 = document.createElement('input');
                         input2.type = 'hidden';
                         input2.name = 'new_order';
                         input2.value = JSON.stringify(newOrder);
-                        
+
                         form.appendChild(input1);
                         form.appendChild(input2);
                         document.body.appendChild(form);
@@ -346,7 +345,55 @@ foreach ($user_wishlist as $game) {
                     }
                 });
             }
+
+            document.querySelectorAll('.ajax-add-cart').forEach(button => {
+                button.addEventListener('click', function() {
+                    const gameId = this.getAttribute('data-game-id');
+                    const originalText = this.textContent;
+                    this.disabled = true;
+                    this.textContent = 'Adding...';
+
+                    fetch('ajax_handler.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: 'action=add_to_cart&game_id=' + gameId
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                this.textContent = '✓ Added!';
+                                this.classList.add('success-btn');
+
+                                // Update cart count in header
+                                const cartBadge = document.querySelector('.cart-link');
+                                if (cartBadge && data.cart_count) {
+                                    cartBadge.textContent = '🛒 Cart (' + data.cart_count + ')';
+                                }
+
+                                setTimeout(() => {
+                                    this.textContent = originalText;
+                                    this.disabled = false;
+                                    this.classList.remove('success-btn');
+                                }, 2000);
+                            } else {
+                                this.textContent = 'Failed';
+                                this.disabled = false;
+                                setTimeout(() => {
+                                    this.textContent = originalText;
+                                }, 2000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            this.textContent = originalText;
+                            this.disabled = false;
+                        });
+                });
+            });
         });
     </script>
 </body>
+
 </html>
