@@ -1,4 +1,11 @@
 <?php
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require __DIR__ . '/vendor/autoload.php';
+    if (class_exists(\Dotenv\Dotenv::class)) {
+        \Dotenv\Dotenv::createImmutable(__DIR__)->safeLoad();
+    }
+}
+
 session_start();
 
 // Include required classes
@@ -54,27 +61,30 @@ $data_counts['games'] = $stmt->fetchColumn();
 
 $user_balance = $current_user->getBalance();
 
-function formatPrice($amount) {
+function formatPrice($amount)
+{
     return '$' . number_format($amount, 2);
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
     <?php include './inc/header.inc.php'; ?>
-      
+
 
     <div class="container">
         <div class="welcome-card">
             <h2>Welcome to your dashboard!</h2>
             <p>Here you can go to the shop, library, and account settings.</p>
-            
+
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-number"><?php echo $data_counts['owned_games']; ?></div>
@@ -111,20 +121,21 @@ function formatPrice($amount) {
             </div>
 
             <?php if ($current_user->isAdmin()): ?>
-            <div class="dashboard-card">
-                <h3>🛠 Admin</h3>
-                <p>Quick access to admin tools and reports.</p>
-                <div class="admin-actions">
-                    <a href="admin/dashboard.php" class="card-btn">Dashboard</a>
-                    <a href="admin/users.php" class="card-btn secondary">Users</a>
-                    <a href="admin/games.php" class="card-btn secondary">Games</a>
-                    <a href="admin/categories.php" class="card-btn secondary">Categories</a>
+                <div class="dashboard-card">
+                    <h3>🛠 Admin</h3>
+                    <p>Quick access to admin tools and reports.</p>
+                    <div class="admin-actions">
+                        <a href="admin/dashboard.php" class="card-btn">Dashboard</a>
+                        <a href="admin/users.php" class="card-btn secondary">Users</a>
+                        <a href="admin/games.php" class="card-btn secondary">Games</a>
+                        <a href="admin/categories.php" class="card-btn secondary">Categories</a>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
         </div>
     </div>
 
     <?php include './inc/footer.inc.php'; ?>
 </body>
+
 </html>

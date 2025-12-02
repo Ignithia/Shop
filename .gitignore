@@ -1,3 +1,5 @@
 /fiveserver.config.js
 /.php_tmp/
 /example_classes.php
+.env
+/vendor/
