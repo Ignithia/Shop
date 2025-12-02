@@ -3,3 +3,4 @@
 /example_classes.php
 .env
 /vendor/
+./extra/*
