@@ -6,7 +6,7 @@
  */
 
 // Include dependencies
-require_once __DIR__ . '/category.php';
+require_once __DIR__ . '/Category.php';
 require_once __DIR__ . '/Review.php';
 
 class Game
