@@ -14,6 +14,8 @@ class User
     private $balance;
     private $joindate;
     private $admin;
+    private $banned = false;
+    private $ban_reason = '';
     private $public_profile = true;
     private $public_library = true;
     private $pdo;
@@ -90,6 +92,14 @@ class User
     {
         return $this->admin;
     }
+    public function isBanned()
+    {
+        return (bool)$this->banned;
+    }
+    public function getBanReason()
+    {
+        return $this->ban_reason;
+    }
     public function isPublicProfile()
     {
         return (bool)$this->public_profile;
@@ -122,6 +132,8 @@ class User
             $this->balance = $userData['balance'];
             $this->joindate = $userData['joindate'];
             $this->admin = $userData['admin'];
+            $this->banned = isset($userData['banned']) ? (bool)$userData['banned'] : false;
+            $this->ban_reason = $userData['ban_reason'] ?? '';
             $this->public_profile = isset($userData['public_profile']) ? (bool)$userData['public_profile'] : true;
             $this->public_library = isset($userData['public_library']) ? (bool)$userData['public_library'] : true;
             return true;
@@ -149,6 +161,8 @@ class User
             $this->balance = $userData['balance'];
             $this->joindate = $userData['joindate'];
             $this->admin = $userData['admin'];
+            $this->banned = isset($userData['banned']) ? (bool)$userData['banned'] : false;
+            $this->ban_reason = $userData['ban_reason'] ?? '';
             $this->public_profile = isset($userData['public_profile']) ? (bool)$userData['public_profile'] : true;
             $this->public_library = isset($userData['public_library']) ? (bool)$userData['public_library'] : true;
             return true;
@@ -176,6 +190,8 @@ class User
             $this->balance = $userData['balance'];
             $this->joindate = $userData['joindate'];
             $this->admin = $userData['admin'];
+            $this->banned = isset($userData['banned']) ? (bool)$userData['banned'] : false;
+            $this->ban_reason = $userData['ban_reason'] ?? '';
             return true;
         }
         return false;
@@ -757,6 +773,18 @@ class User
             return [
                 'success' => false,
                 'message' => 'Invalid login credentials',
+                'user' => null
+            ];
+        }
+
+        // Check if banned (if column exists it was populated during load)
+        if ($user->isBanned()) {
+            $reason = $user->getBanReason();
+            $msg = 'Your account has been banned.';
+            if (!empty($reason)) $msg .= ' Reason: ' . $reason;
+            return [
+                'success' => false,
+                'message' => $msg,
                 'user' => null
             ];
         }

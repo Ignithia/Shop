@@ -133,7 +133,8 @@ class Review
      */
     public static function getByGame($pdo, $gameId, $limit = 100)
     {
-        $stmt = $pdo->prepare("SELECT r.*, u.username FROM review r JOIN users u ON r.fk_user = u.id WHERE r.fk_game = ? ORDER BY r.created_at DESC LIMIT ?");
+
+        $stmt = $pdo->prepare("SELECT r.*, u.username FROM review r JOIN users u ON r.fk_user = u.id WHERE r.fk_game = ? AND COALESCE(u.banned, 0) = 0 ORDER BY r.created_at DESC LIMIT ?");
         $stmt->execute([$gameId, intval($limit)]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -143,7 +144,8 @@ class Review
      */
     public static function getByUser($pdo, $userId, $limit = 100)
     {
-        $stmt = $pdo->prepare("SELECT r.*, g.name as game_name FROM review r JOIN game g ON r.fk_game = g.id WHERE r.fk_user = ? ORDER BY r.created_at DESC LIMIT ?");
+
+        $stmt = $pdo->prepare("SELECT r.*, g.name as game_name FROM review r JOIN game g ON r.fk_game = g.id JOIN users u ON r.fk_user = u.id WHERE r.fk_user = ? AND COALESCE(u.banned, 0) = 0 ORDER BY r.created_at DESC LIMIT ?");
         $stmt->execute([$userId, intval($limit)]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -153,7 +155,8 @@ class Review
      */
     public static function getStatsForGame($pdo, $gameId)
     {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN recommended = 1 THEN 1 ELSE 0 END) as positive FROM review WHERE fk_game = ?");
+        // Count only reviews from non-banned users
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN r.recommended = 1 THEN 1 ELSE 0 END) as positive FROM review r JOIN users u ON r.fk_user = u.id WHERE r.fk_game = ? AND COALESCE(u.banned, 0) = 0");
         $stmt->execute([$gameId]);
         $stats = $stmt->fetch(PDO::FETCH_ASSOC);
         $stats['percentage'] = $stats['total'] > 0 ? round(($stats['positive'] / $stats['total']) * 100) : 0;

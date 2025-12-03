@@ -6805,21 +6805,54 @@ body a:hover {
   justify-content: space-between;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
-.friend-left { display:flex; align-items:center; gap:12px; }
-.friend-avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#0b2330, #1b3a4a); border:2px solid rgba(102,192,244,0.12); box-shadow:0 2px 10px rgba(0,0,0,0.4); }
-.friend-link { color: var(--accent-blue); font-weight:600; font-size:1rem; text-decoration: none; }
-.friend-link:hover { color: var(--accent-purple); text-decoration: underline; }
-.friend-actions { display:flex; align-items:center; gap:8px; }
+.friend-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.friend-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0b2330, #1b3a4a);
+  border: 2px solid rgba(102, 192, 244, 0.12);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+.friend-link {
+  color: var(--accent-blue);
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+}
+.friend-link:hover {
+  color: var(--accent-purple);
+  text-decoration: underline;
+}
+.friend-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* Tweak remove button to be smaller and fit inline */
-.remove-friend-form .btn-danger { padding:8px 12px; font-size:0.95rem; }
+.remove-friend-form .btn-danger {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+}
 
 /* Incoming/outgoing request username link styling */
-.friend-request-item a { color: var(--accent-blue); font-weight:600; text-decoration: none; }
-.friend-request-item a:hover { color: var(--accent-purple); text-decoration: underline; }
+.friend-request-item a {
+  color: var(--accent-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+.friend-request-item a:hover {
+  color: var(--accent-purple);
+  text-decoration: underline;
+}
 
 .modal .row {
   margin-left: -0.75rem;
@@ -6859,4 +6892,17 @@ body a:hover {
   .modal-title {
     font-size: 1.2rem;
   }
+}
+
+.banned-badge {
+  background: linear-gradient(90deg, #ff6b6b 0%, #ff4d4d 100%);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+}
+.banned-badge i {
+  margin-right: 6px;
 }

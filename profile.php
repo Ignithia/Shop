@@ -43,11 +43,11 @@ if (!empty($_GET['user'])) {
 }
 
 if (!$loaded) {
-	// If requested profile not found, fall back to logged-in user's profile
 	$profile_user = $me;
 }
 
-$is_admin      = $me->isAdmin();
+$viewer_is_admin = $me->isAdmin();
+$profile_is_admin = $profile_user->isAdmin();
 $display_username = $profile_user->getUsername();
 $owned_games   = $profile_user->getOwnedGames();
 $wishlist_games = $profile_user->getWishlist();
@@ -113,7 +113,10 @@ function esc($v)
 							<h3 class="username-glow"><?= esc($display_username) ?></h3>
 							<div class="user-badges">
 								<span class="badge user-badge"><i class="fas fa-gamepad"></i> Gamer</span>
-								<?php if ($is_admin): ?><span class="badge admin-badge"><i class="fas fa-crown"></i> Admin</span><?php endif; ?>
+								<?php if ($profile_user->isBanned()): ?>
+									<span class="badge banned-badge" title="<?= esc($profile_user->getBanReason()) ?>"><i class="fas fa-ban"></i> Banned</span>
+								<?php endif; ?>
+								<?php if ($profile_is_admin): ?><span class="badge admin-badge"><i class="fas fa-crown"></i> Admin</span><?php endif; ?>
 							</div>
 							<div class="user-balance">
 								<span class="balance-label">Balance</span>
@@ -121,7 +124,7 @@ function esc($v)
 									<?php if ($profile_user->getId() === $me->getId()): ?>
 										<?= $profile_user->getFormattedBalanceCoins() ?>
 									<?php else: ?>
-										<em>Hidden</em>
+										<p>Hidden</p>
 									<?php endif; ?>
 								</span>
 							</div>
@@ -152,7 +155,7 @@ function esc($v)
 							<?php endif; ?>
 						</div>
 
-						<?php if ($is_admin): ?>
+						<?php if ($viewer_is_admin && $profile_user->getId() === $me->getId()): ?>
 							<div class="admin-panel-card">
 								<h4><i class="fas fa-tools"></i> Admin Panel</h4>
 								<div class="admin-links">
@@ -182,7 +185,7 @@ function esc($v)
 									<div class="profile-stat-badge bad"><i class="fas fa-wallet"></i> Balance: <?php if ($profile_user->getId() === $me->getId()) {
 																													echo $profile_user->getFormattedBalanceCoins();
 																												} else {
-																													echo '<em>Hidden</em>';
+																													echo '<p>Hidden</p>';
 																												} ?></div>
 								</div>
 								<?php if ($profile_user->getId() === $me->getId()): ?>

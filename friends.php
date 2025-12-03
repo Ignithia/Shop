@@ -199,41 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['add_friend_username'
                         btn.addEventListener('click', function() {
                             f._lastClicked = this;
                         });
-
-                        document.querySelectorAll('.remove-friend-form').forEach(function(frm) {
-                            frm.addEventListener('submit', function(e) {
-                                e.preventDefault();
-                                const form = e.currentTarget;
-                                const btn = form.querySelector('button');
-                                if (btn) btn.disabled = true;
-                                const formData = new FormData(form);
-                                let url;
-                                try {
-                                    url = new URL(form.action, window.location.href).href;
-                                } catch (err) {
-                                    url = form.action;
-                                }
-                                fetch(url, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    },
-                                    body: new URLSearchParams(Array.from(formData.entries()))
-                                }).then(r => r.json()).then(j => {
-                                    if (j.success) {
-                                        const li = form.closest('.friend-item');
-                                        if (li) li.remove();
-                                    } else {
-                                        alert(j.message || 'Failed to remove friend');
-                                        if (btn) btn.disabled = false;
-                                    }
-                                }).catch(err => {
-                                    console.error('Remove friend error', err);
-                                    alert('Network error');
-                                    if (btn) btn.disabled = false;
-                                });
-                            });
-                        });
                     });
 
                     f.addEventListener('submit', function(e) {
@@ -265,28 +230,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['add_friend_username'
                             body: new URLSearchParams(Array.from(formData.entries()))
                         }).then(response => {
                             if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText);
-                            return response.text();
-                        }).then(text => {
-                            try {
-                                const j = JSON.parse(text);
-                                if (j.success) {
-                                    statusEl.textContent = j.message || 'Done';
-                                    setTimeout(() => {
-                                        if (li) li.remove();
-                                    }, 700);
-                                } else {
-                                    statusEl.textContent = j.message || 'Failed';
-                                    buttons.forEach(b => b.disabled = false);
-                                }
-                            } catch (err) {
-                                console.error('Invalid JSON from respond_friend:', text);
-                                statusEl.textContent = 'Server error';
+                            return response.json();
+                        }).then(j => {
+                            if (j.success) {
+                                if (statusEl) statusEl.textContent = j.message || 'Done';
+                                setTimeout(() => {
+                                    if (li) li.remove();
+                                }, 700);
+                            } else {
+                                if (statusEl) statusEl.textContent = j.message || 'Failed';
                                 buttons.forEach(b => b.disabled = false);
                             }
                         }).catch(err => {
                             console.error('Respond friend fetch error:', err);
-                            statusEl.textContent = 'Network error: ' + (err.message || '');
+                            if (statusEl) statusEl.textContent = 'Network error: ' + (err.message || '');
                             buttons.forEach(b => b.disabled = false);
+                        });
+                    });
+                });
+
+                document.querySelectorAll('.remove-friend-form').forEach(function(frm) {
+                    frm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        const form = e.currentTarget;
+                        const btn = form.querySelector('button');
+                        if (btn) btn.disabled = true;
+                        const formData = new FormData(form);
+                        let url;
+                        try {
+                            url = new URL(form.action, window.location.href).href;
+                        } catch (err) {
+                            url = form.action;
+                        }
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: new URLSearchParams(Array.from(formData.entries()))
+                        }).then(r => r.json()).then(j => {
+                            if (j.success) {
+                                const li = form.closest('.friend-item');
+                                if (li) li.remove();
+                            } else {
+                                alert(j.message || 'Failed to remove friend');
+                                if (btn) btn.disabled = false;
+                            }
+                        }).catch(err => {
+                            console.error('Remove friend error', err);
+                            alert('Network error');
+                            if (btn) btn.disabled = false;
                         });
                     });
                 });
