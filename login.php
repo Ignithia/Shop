@@ -95,15 +95,9 @@ $remembered_email = $_COOKIE['remember_login'] ?? '';
             </div>
 
             <div class="demo-credentials">
-                <strong>Demo Login:</strong><br>
-                Email: test@shop.com<br>
-                Username: test<br>
-                Password: test123<br>
-                Create an account or login with existing credentials<br>
-                All accounts use secure password hashing
+                Create an account or login with existing credentials
             </div>
         </div>
-    </div>
 </body>
 
 </html>

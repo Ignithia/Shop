@@ -3,6 +3,7 @@
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
+require_once 'classes/Friend.php';
 
 session_start();
 header('Content-Type: application/json');
@@ -27,7 +28,7 @@ try {
     exit();
 }
 
-$action = $_POST['action'] ?? $_GET['action'] ?? '';
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 switch ($action) {
     case 'add_to_cart':
@@ -150,12 +151,130 @@ switch ($action) {
         ]);
         break;
 
+    case 'search_entities':
+        $q = trim($_GET['q'] ?? $_POST['q'] ?? '');
+        $type = $_GET['type'] ?? $_POST['type'] ?? 'all';
+        if (strlen($q) < 1) {
+            echo json_encode(['success' => false, 'message' => 'Query too short']);
+            break;
+        }
+        $results = [];
+        // search users
+        if ($type === 'all' || $type === 'user') {
+            $stmt = $pdo->prepare("SELECT id, username FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 10");
+            $stmt->execute(["%$q%"]);
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($users as $u) {
+                $results[] = [
+                    'type' => 'user',
+                    'id' => (int)$u['id'],
+                    'label' => $u['username'],
+                    'url' => 'profile.php?user=' . urlencode($u['username'])
+                ];
+            }
+        }
+        // search games
+        if ($type === 'all' || $type === 'game') {
+            $stmt = $pdo->prepare("SELECT id, name FROM game WHERE name LIKE ? ORDER BY name ASC LIMIT 10");
+            $stmt->execute(["%$q%"]);
+            $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($games as $g) {
+                $results[] = [
+                    'type' => 'game',
+                    'id' => (int)$g['id'],
+                    'label' => $g['name'],
+                    'url' => 'product.php?id=' . (int)$g['id']
+                ];
+            }
+        }
+
+        echo json_encode(['success' => true, 'results' => $results]);
+        break;
+
     case 'get_cart_count':
         $cart_count = count($currentUser->getShoppingCart());
         echo json_encode([
             'success' => true,
             'cart_count' => $cart_count
         ]);
+        break;
+
+    /* Friend actions */
+    case 'send_friend_request':
+        $target_id = isset($_POST['target_id']) ? (int)$_POST['target_id'] : 0;
+        $target_username = trim($_POST['username'] ?? '');
+        $friendSvc = new Friend($pdo);
+
+        if ($target_id <= 0 && $target_username === '') {
+            echo json_encode(['success' => false, 'message' => 'Missing target']);
+            break;
+        }
+
+        // Resolve username to id if necessary
+        if ($target_id <= 0 && $target_username !== '') {
+            $u = new User($pdo);
+            if (!$u->loadByUsername($target_username)) {
+                echo json_encode(['success' => false, 'message' => 'User not found']);
+                break;
+            }
+            $target_id = $u->getId();
+        }
+
+        if ($target_id === $currentUser->getId()) {
+            echo json_encode(['success' => false, 'message' => 'Cannot add yourself']);
+            break;
+        }
+
+        $ok = $friendSvc->sendRequest($currentUser->getId(), $target_id);
+        echo json_encode(['success' => (bool)$ok, 'message' => $ok ? 'Request sent' : 'Request failed or already pending']);
+        break;
+
+    case 'remove_friend':
+        $target_id = isset($_POST['target_id']) ? (int)$_POST['target_id'] : 0;
+        if ($target_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Missing target_id']);
+            break;
+        }
+        $friendSvc = new Friend($pdo);
+        $ok = $friendSvc->removeFriend($currentUser->getId(), $target_id);
+        echo json_encode(['success' => (bool)$ok]);
+        break;
+
+    case 'update_profile':
+        $me = $currentUser;
+        $username = trim($_POST['username'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $avatar = trim($_POST['avatar'] ?? '');
+        $public_profile = isset($_POST['public_profile']) ? 1 : 0;
+        $public_library = isset($_POST['public_library']) ? 1 : 0;
+
+        if ($username === '' || $email === '') {
+            echo json_encode(['success' => false, 'message' => 'Username and email required']);
+            break;
+        }
+
+        $me->setUsername($username);
+        $me->setEmail($email);
+        $me->setAvatar($avatar);
+        $me->setPublicProfile((bool)$public_profile);
+        $me->setPublicLibrary((bool)$public_library);
+
+        $ok = $me->save();
+        if ($ok) echo json_encode(['success' => true, 'message' => 'Profile saved']);
+        else echo json_encode(['success' => false, 'message' => 'Save failed']);
+        break;
+
+    case 'respond_friend_request':
+        $from_id = isset($_POST['from_id']) ? (int)$_POST['from_id'] : 0;
+        $decision = $_POST['action'] ?? '';
+        if ($from_id <= 0 || !in_array($decision, ['accept', 'reject'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+            break;
+        }
+        $friendSvc = new Friend($pdo);
+        $accepted = ($decision === 'accept');
+        $ok = $friendSvc->respondRequest($from_id, $currentUser->getId(), $accepted);
+        echo json_encode(['success' => (bool)$ok, 'message' => $ok ? ($accepted ? 'Accepted' : 'Rejected') : 'Operation failed']);
         break;
 
     default:

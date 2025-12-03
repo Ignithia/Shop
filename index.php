@@ -42,6 +42,9 @@ if (!$current_user) {
     exit();
 }
 
+// Ajax base for endpoints
+$ajaxBase = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false) ? '../' : '';
+
 $username = $current_user->getUsername();
 
 // Get dashboard statistics
@@ -84,6 +87,20 @@ function formatPrice($amount)
         <div class="welcome-card">
             <h2>Welcome to your dashboard!</h2>
             <p>Here you can go to the shop, library, and account settings.</p>
+
+            <div class="site-search" style="margin-top:16px; max-width:680px;">
+                <label for="globalSearch" style="display:block; margin-bottom:6px; color:var(--text-secondary);">Search games or people</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="searchType" style="padding:8px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);">
+                        <option value="all">All</option>
+                        <option value="game">Games</option>
+                        <option value="user">People</option>
+                    </select>
+                    <input id="globalSearch" type="search" placeholder="Search games or users" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:rgba(255,255,255,0.03);color:var(--text-primary);" />
+                    <button id="searchBtn" class="card-btn">Search</button>
+                </div>
+                <div id="searchResults" style="margin-top:8px; position:relative;"></div>
+            </div>
 
             <div class="stats">
                 <div class="stat-item">
@@ -136,6 +153,42 @@ function formatPrice($amount)
     </div>
 
     <?php include './inc/footer.inc.php'; ?>
+    <script>
+        (function(){
+            const AJAX_ENDPOINT = '<?php echo $ajaxBase; ?>ajax_handler.php';
+            const input = document.getElementById('globalSearch');
+            const typeSel = document.getElementById('searchType');
+            const btn = document.getElementById('searchBtn');
+            const results = document.getElementById('searchResults');
+
+            function render(items){
+                if(!items || items.length === 0){ results.innerHTML = '<div class="muted">No results</div>'; return; }
+                const ul = document.createElement('ul');
+                ul.className = 'search-results-list';
+                ul.style.listStyle='none'; ul.style.padding='8px'; ul.style.margin='0'; ul.style.background='var(--bg-secondary)'; ul.style.border='1px solid var(--border-color)'; ul.style.borderRadius='8px';
+                items.forEach(it=>{
+                    const li = document.createElement('li');
+                    li.style.padding='6px 8px'; li.style.cursor='pointer'; li.style.display='flex'; li.style.justifyContent='space-between'; li.style.alignItems='center';
+                    li.innerHTML = `<span style="font-weight:600">${it.label}</span><small style="color:var(--text-muted);margin-left:12px">${it.type}</small>`;
+                    li.addEventListener('click', ()=>{ window.location = it.url; });
+                    ul.appendChild(li);
+                });
+                results.innerHTML = ''; results.appendChild(ul);
+            }
+
+            function doSearch(q, type){
+                if(!q || q.trim().length < 1){ results.innerHTML = ''; return; }
+                fetch(`${AJAX_ENDPOINT}?action=search_entities&q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}`)
+                    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+                    .then(j=>{ if(j.success) render(j.results); else results.innerHTML = '<div class="error">No results</div>'; })
+                    .catch(err=>{ console.error('Search error', err); results.innerHTML = '<div class="error">Search failed</div>'; });
+            }
+
+            if(btn){ btn.addEventListener('click', ()=> doSearch(input.value, typeSel.value)); }
+            if(input){ input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doSearch(input.value, typeSel.value); } }); }
+
+        })();
+    </script>
 </body>
 
 </html>

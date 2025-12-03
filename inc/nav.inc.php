@@ -9,6 +9,7 @@ $cur_url = basename($_SERVER['SCRIPT_NAME']);
 
 $nav_items = [
     'profile.php' => 'Profile',
+    'friends.php' => 'Friends',
     'settings.php' => 'Settings',
     'wallet.php' => 'Wallet',
     'purchases.php' => 'Purchase History'
@@ -36,7 +37,7 @@ $__href = function ($path) use ($__in_admin) {
                 <a href="<?php echo $__href('admin/dashboard.php'); ?>" class="admin-nav-link">Admin Dashboard</a>
             <?php endif; ?>
 
-            <a href="?logout=1" class="logout">🚪 Logout</a>
+            <a href="<?php echo $__href('index.php?logout=1'); ?>" class="logout">🚪 Logout</a>
         </div>
     </div>
 </nav>

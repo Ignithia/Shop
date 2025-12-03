@@ -26,7 +26,7 @@ try {
     $database = Database::getInstance();
     $pdo = $database->getConnection();
     $currentUser = User::getCurrentUser($pdo);
-    
+
     if (!$currentUser) {
         header('Location: login.php');
         exit();
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
         $current_password = $_POST['current_password'] ?? '';
         $new_password = $_POST['new_password'] ?? '';
         $confirm_password = $_POST['confirm_password'] ?? '';
-        
+
         if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
             $error_message = 'All password fields are required.';
         } elseif ($new_password !== $confirm_password) {
@@ -58,23 +58,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
             }
         }
     }
-    
+
     if (isset($_POST['update_notifications'])) {
         $success_message = 'Notification settings updated successfully!';
     }
-    
+
     if (isset($_POST['update_privacy'])) {
-        $success_message = 'Privacy settings updated successfully!';
+        $profile_public = isset($_POST['profile_public']) ? 1 : 0;
+        $library_public = isset($_POST['library_public']) ? 1 : 0;
+
+        if ($currentUser) {
+            $currentUser->setPublicProfile($profile_public);
+            $currentUser->setPublicLibrary($library_public);
+            if ($currentUser->save()) {
+                $success_message = 'Privacy settings updated successfully!';
+            } else {
+                $error_message = 'Failed to save privacy settings. Please try again.';
+            }
+        } else {
+            $error_message = 'Unable to find current user.';
+        }
     }
-    
+
     if (isset($_POST['update_display'])) {
         $success_message = 'Display settings updated successfully!';
     }
-    
+
     if (isset($_POST['export_data'])) {
         $success_message = 'Data export request submitted. You will receive an email when ready.';
     }
-    
+
     if (isset($_POST['delete_account'])) {
         $confirm_delete = $_POST['confirm_delete'] ?? '';
         if ($confirm_delete === 'DELETE') {
@@ -96,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -104,9 +118,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
+
 <body>
     <?php include 'inc/header.inc.php'; ?>
-    
+
     <div class="container">
         <div class="settings-header">
             <h1>⚙️ Account Settings</h1>
@@ -151,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                 <div class="settings-section active" id="profile">
                     <h2>Profile Settings</h2>
                     <p class="section-description">Manage your basic profile information. For username, email, and avatar changes, visit your <a href="profile.php">Profile Page</a>.</p>
-                    
+
                     <div class="setting-group">
                         <div class="current-info">
                             <div class="info-row">
@@ -177,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                 </span>
                             </div>
                         </div>
-                        <a href="profile.php" class="btn btn-primary">Edit Profile</a>
+                        <a href="profile.php?edit=1" class="btn btn-primary">Edit Profile</a>
                     </div>
                 </div>
 
@@ -185,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                 <div class="settings-section" id="notifications">
                     <h2>Notification Preferences</h2>
                     <p class="section-description">Choose what notifications you'd like to receive.</p>
-                    
+
                     <form method="POST" class="settings-form">
                         <div class="setting-group">
                             <h3>Email Notifications</h3>
@@ -198,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                         <small>Receive email confirmations for your purchases</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="email_sales" checked>
                                     <span class="checkmark"></span>
@@ -207,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                         <small>Get notified about special offers and sales</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="email_wishlist">
                                     <span class="checkmark"></span>
@@ -216,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                         <small>Notifications when wishlist games go on sale</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="email_security" checked>
                                     <span class="checkmark"></span>
@@ -227,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div class="setting-group">
                             <h3>Browser Notifications</h3>
                             <div class="checkbox-list">
@@ -239,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                         <small>Remind me about items in my shopping cart</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="browser_releases">
                                     <span class="checkmark"></span>
@@ -250,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                 </label>
                             </div>
                         </div>
-                        
+
                         <button type="submit" name="update_notifications" class="btn btn-primary">Save Notification Settings</button>
                     </form>
                 </div>
@@ -259,29 +274,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                 <div class="settings-section" id="privacy">
                     <h2>Privacy & Security</h2>
                     <p class="section-description">Manage your privacy settings and account security.</p>
-                    
+
                     <form method="POST" class="settings-form">
                         <div class="setting-group">
                             <h3>Privacy Settings</h3>
                             <div class="checkbox-list">
                                 <label class="checkbox-item">
-                                    <input type="checkbox" name="profile_public">
+                                    <input type="checkbox" name="profile_public" <?php echo ($currentUser && $currentUser->isPublicProfile()) ? 'checked' : ''; ?>>
                                     <span class="checkmark"></span>
                                     <div class="checkbox-content">
                                         <strong>Public Profile</strong>
                                         <small>Allow other users to view your gaming statistics</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
-                                    <input type="checkbox" name="library_public">
+                                    <input type="checkbox" name="library_public" <?php echo ($currentUser && $currentUser->isPublicLibrary()) ? 'checked' : ''; ?>>
                                     <span class="checkmark"></span>
                                     <div class="checkbox-content">
                                         <strong>Public Game Library</strong>
                                         <small>Show your game collection to other users</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="achievements_public" checked>
                                     <span class="checkmark"></span>
@@ -292,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div class="setting-group">
                             <h3>Data Collection</h3>
                             <div class="checkbox-list">
@@ -304,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                         <small>Help improve our service by sharing anonymous usage data</small>
                                     </div>
                                 </label>
-                                
+
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="personalization" checked>
                                     <span class="checkmark"></span>
@@ -315,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div class="setting-group">
                             <h3>Security Options</h3>
                             <div class="card mb-3">
@@ -342,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <button type="submit" name="update_privacy" class="btn btn-primary">Save Privacy Settings</button>
                     </form>
                 </div>
@@ -351,7 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                 <div class="settings-section" id="data">
                     <h2>Data & Downloads</h2>
                     <p class="section-description">Manage your data and download your information.</p>
-                    
+
                     <div class="setting-group">
                         <h3>Export Your Data</h3>
                         <p>Download a copy of your data including your profile, purchase history, and preferences.</p>
@@ -359,7 +374,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                             <button type="submit" name="export_data" class="btn btn-secondary">Request Data Export</button>
                         </form>
                     </div>
-                    
+
                     <div class="setting-group">
                         <h3>Storage Usage</h3>
                         <div class="storage-info">
@@ -387,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
                 <div class="settings-section" id="danger">
                     <h2>⚠️ Danger Zone</h2>
                     <p class="section-description">Irreversible and destructive actions. Please be careful.</p>
-                    
+
                     <div class="danger-zone">
                         <div class="danger-item">
                             <h3>Delete Account</h3>
@@ -417,19 +432,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
         document.querySelectorAll('.settings-nav-link').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                // Remove active class from all links and sections
+
                 document.querySelectorAll('.settings-nav-link').forEach(l => l.classList.remove('active'));
                 document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
-                
-                // Add active class to clicked link
+
                 this.classList.add('active');
-                
-                // Show corresponding section
+
                 const sectionId = this.getAttribute('data-section');
                 document.getElementById(sectionId).classList.add('active');
-                
-                // Update URL hash
+
                 window.location.hash = sectionId;
             });
         });
@@ -470,4 +481,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($pdo)) {
         });
     </script>
 </body>
+
 </html>
