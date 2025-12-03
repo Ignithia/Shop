@@ -104,7 +104,11 @@ function esc($v)
 					<div class="profile-sidebar">
 						<div class="user-profile-card">
 							<div class="user-avatar">
-								<div class="avatar-placeholder"><i class="fas fa-user"></i></div>
+								<?php if ($profile_user->getAvatar()): ?>
+									<img class="avatar-img" src="<?= esc($profile_user->getAvatar()) ?>" alt="<?= esc($display_username) ?>'s avatar" />
+								<?php else: ?>
+									<div class="avatar-placeholder"><i class="fas fa-user"></i></div>
+								<?php endif; ?>
 							</div>
 							<h3 class="username-glow"><?= esc($display_username) ?></h3>
 							<div class="user-badges">
