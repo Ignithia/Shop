@@ -92,10 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['add_friend_username'
                 <ul class="friends-list">
                     <?php foreach ($friends as $f): ?>
                         <li class="friend-item" data-user-id="<?php echo (int)$f['id']; ?>">
-                            <div class="friend-left">
-                                <div class="friend-avatar" aria-hidden="true"></div>
-                                <a class="friend-link" href="profile.php?user=<?php echo urlencode($f['username']); ?>"><?php echo htmlspecialchars($f['username']); ?></a>
-                            </div>
+                                <div class="friend-left">
+                                    <?php if (!empty($f['avatar'])): ?>
+                                        <div class="friend-avatar"><img src="<?= htmlspecialchars($f['avatar']) ?>" alt="<?= htmlspecialchars($f['username']) ?>'s avatar" /></div>
+                                    <?php else: ?>
+                                        <div class="friend-avatar" aria-hidden="true"></div>
+                                    <?php endif; ?>
+                                    <a class="friend-link" href="profile.php?user=<?php echo urlencode($f['username']); ?>"><?php echo htmlspecialchars($f['username']); ?></a>
+                                </div>
                             <div class="friend-actions">
                                 <form method="post" action="<?php echo $ajaxBase; ?>ajax_handler.php?action=remove_friend" class="remove-friend-form">
                                     <input type="hidden" name="target_id" value="<?php echo (int)$f['id']; ?>">
@@ -115,7 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['add_friend_username'
             <?php else: ?>
                 <ul>
                     <?php foreach ($incoming as $r): ?>
-                        <li class="friend-request-item"><a href="profile.php?user=<?php echo urlencode($r['username']); ?>"><?php echo htmlspecialchars($r['username']); ?></a>
+                        <li class="friend-request-item">
+                            <?php if (!empty($r['avatar'])): ?>
+                                <div class="friend-avatar"><img src="<?= htmlspecialchars($r['avatar']) ?>" alt="<?= htmlspecialchars($r['username']) ?>'s avatar" /></div>
+                            <?php else: ?>
+                                <div class="friend-avatar" aria-hidden="true"></div>
+                            <?php endif; ?>
+                            <a href="profile.php?user=<?php echo urlencode($r['username']); ?>"><?php echo htmlspecialchars($r['username']); ?></a>
                             <form method="post" action="<?php echo $ajaxBase; ?>ajax_handler.php?action=respond_friend_request" style="display:inline" class="friend-form">
                                 <input type="hidden" name="from_id" value="<?php echo (int)$r['id']; ?>">
                                 <button type="submit" class="friend-action-btn btn-accept" name="action" value="accept">Accept</button>

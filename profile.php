@@ -348,7 +348,7 @@ function esc($v)
 			});
 		});
 
-		showTab('overview');
+		showTab('<?= esc($selected_tab) ?>');
 	});
 
 	// Edit profile modal behavior

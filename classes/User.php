@@ -648,6 +648,44 @@ class User
     }
 
     /**
+     * Count users matching filters (used by admin UI)
+     * @param PDO $pdo
+     * @param array $filters
+     * @return int
+     */
+    public static function countUsers($pdo, $filters = [])
+    {
+        $sql = "SELECT COUNT(*) FROM users u";
+
+        $conditions = [];
+        $params = [];
+
+        if (!empty($filters['search'])) {
+            $conditions[] = "(u.username LIKE ? OR u.email LIKE ?)";
+            $params[] = '%' . $filters['search'] . '%';
+            $params[] = '%' . $filters['search'] . '%';
+        }
+
+        if (isset($filters['admin']) && $filters['admin'] !== null) {
+            $conditions[] = "u.admin = ?";
+            $params[] = $filters['admin'];
+        }
+
+        if (isset($filters['banned']) && $filters['banned'] !== null) {
+            $conditions[] = "u.banned = ?";
+            $params[] = $filters['banned'];
+        }
+
+        if (!empty($conditions)) {
+            $sql .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Register new user
      * @param PDO $pdo Database connection
      * @param string $username Username

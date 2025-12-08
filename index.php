@@ -54,13 +54,9 @@ $data_counts = [
     'owned_games' => count($current_user->getOwnedGames())
 ];
 
-// Count total users
-$stmt = $pdo->query("SELECT COUNT(*) FROM users");
-$data_counts['users'] = $stmt->fetchColumn();
-
-// Count total games
-$stmt = $pdo->query("SELECT COUNT(*) FROM game");
-$data_counts['games'] = $stmt->fetchColumn();
+// Count total users and games
+$data_counts['users'] = User::countUsers($pdo, []);
+$data_counts['games'] = Game::countAllGames($pdo);
 
 $user_balance = $current_user->getBalance();
 
@@ -154,38 +150,74 @@ function formatPrice($amount)
 
     <?php include './inc/footer.inc.php'; ?>
     <script>
-        (function(){
+        (function() {
             const AJAX_ENDPOINT = '<?php echo $ajaxBase; ?>ajax_handler.php';
             const input = document.getElementById('globalSearch');
             const typeSel = document.getElementById('searchType');
             const btn = document.getElementById('searchBtn');
             const results = document.getElementById('searchResults');
 
-            function render(items){
-                if(!items || items.length === 0){ results.innerHTML = '<div class="muted">No results</div>'; return; }
+            function render(items) {
+                if (!items || items.length === 0) {
+                    results.innerHTML = '<div class="muted">No results</div>';
+                    return;
+                }
                 const ul = document.createElement('ul');
                 ul.className = 'search-results-list';
-                ul.style.listStyle='none'; ul.style.padding='8px'; ul.style.margin='0'; ul.style.background='var(--bg-secondary)'; ul.style.border='1px solid var(--border-color)'; ul.style.borderRadius='8px';
-                items.forEach(it=>{
+                ul.style.listStyle = 'none';
+                ul.style.padding = '8px';
+                ul.style.margin = '0';
+                ul.style.background = 'var(--bg-secondary)';
+                ul.style.border = '1px solid var(--border-color)';
+                ul.style.borderRadius = '8px';
+                items.forEach(it => {
                     const li = document.createElement('li');
-                    li.style.padding='6px 8px'; li.style.cursor='pointer'; li.style.display='flex'; li.style.justifyContent='space-between'; li.style.alignItems='center';
+                    li.style.padding = '6px 8px';
+                    li.style.cursor = 'pointer';
+                    li.style.display = 'flex';
+                    li.style.justifyContent = 'space-between';
+                    li.style.alignItems = 'center';
                     li.innerHTML = `<span style="font-weight:600">${it.label}</span><small style="color:var(--text-muted);margin-left:12px">${it.type}</small>`;
-                    li.addEventListener('click', ()=>{ window.location = it.url; });
+                    li.addEventListener('click', () => {
+                        window.location = it.url;
+                    });
                     ul.appendChild(li);
                 });
-                results.innerHTML = ''; results.appendChild(ul);
+                results.innerHTML = '';
+                results.appendChild(ul);
             }
 
-            function doSearch(q, type){
-                if(!q || q.trim().length < 1){ results.innerHTML = ''; return; }
+            function doSearch(q, type) {
+                if (!q || q.trim().length < 1) {
+                    results.innerHTML = '';
+                    return;
+                }
                 fetch(`${AJAX_ENDPOINT}?action=search_entities&q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}`)
-                    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-                    .then(j=>{ if(j.success) render(j.results); else results.innerHTML = '<div class="error">No results</div>'; })
-                    .catch(err=>{ console.error('Search error', err); results.innerHTML = '<div class="error">Search failed</div>'; });
+                    .then(r => {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        return r.json();
+                    })
+                    .then(j => {
+                        if (j.success) render(j.results);
+                        else results.innerHTML = '<div class="error">No results</div>';
+                    })
+                    .catch(err => {
+                        console.error('Search error', err);
+                        results.innerHTML = '<div class="error">Search failed</div>';
+                    });
             }
 
-            if(btn){ btn.addEventListener('click', ()=> doSearch(input.value, typeSel.value)); }
-            if(input){ input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doSearch(input.value, typeSel.value); } }); }
+            if (btn) {
+                btn.addEventListener('click', () => doSearch(input.value, typeSel.value));
+            }
+            if (input) {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        doSearch(input.value, typeSel.value);
+                    }
+                });
+            }
 
         })();
     </script>

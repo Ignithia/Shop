@@ -277,6 +277,168 @@ switch ($action) {
         echo json_encode(['success' => (bool)$ok, 'message' => $ok ? ($accepted ? 'Accepted' : 'Rejected') : 'Operation failed']);
         break;
 
+    case 'admin_update_user':
+        if (!$currentUser->isAdmin()) {
+            echo json_encode(['success' => false, 'message' => 'Admin access required']);
+            break;
+        }
+        $userId = intval($_POST['user_id'] ?? 0);
+        if ($userId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid user ID']);
+            break;
+        }
+
+        $editUser = new User($pdo);
+        if (!$editUser->loadById($userId)) {
+            echo json_encode(['success' => false, 'message' => 'User not found']);
+            break;
+        }
+
+        $editUser->setUsername(trim($_POST['username'] ?? ''));
+        $editUser->setEmail(trim($_POST['email'] ?? ''));
+        $editUser->setBalance(floatval($_POST['balance'] ?? 0));
+
+        $role = trim($_POST['role'] ?? 'user');
+        $isAdmin = $role === 'admin';
+        $editUser->setAdmin($isAdmin);
+
+        if ($editUser->save()) {
+            echo json_encode(['success' => true, 'message' => 'User updated successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to update user']);
+        }
+        break;
+
+    case 'admin_ban_user':
+        if (!$currentUser->isAdmin()) {
+            echo json_encode(['success' => false, 'message' => 'Admin access required']);
+            break;
+        }
+        $userId = intval($_POST['user_id'] ?? 0);
+        $banReason = trim($_POST['ban_reason'] ?? '');
+
+        if ($userId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid user ID']);
+            break;
+        }
+
+        if ($userId === $currentUser->getId()) {
+            echo json_encode(['success' => false, 'message' => 'Cannot ban your own account']);
+            break;
+        }
+
+        try {
+            // Ensure ban columns exist
+            $colCheck = $pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
+            if (!$colCheck->fetch()) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN banned TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN ban_reason VARCHAR(255) NULL");
+            }
+
+            // Verify user exists
+            $checkStmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $checkStmt->execute([$userId]);
+            $targetUser = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$targetUser) {
+                echo json_encode(['success' => false, 'message' => 'User not found']);
+                break;
+            }
+
+            // Ban the user
+            $stmt = $pdo->prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?");
+            if ($stmt->execute([$banReason, $userId])) {
+                echo json_encode(['success' => true, 'message' => 'User "' . $targetUser['username'] . '" banned successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to ban user']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'admin_unban_user':
+        if (!$currentUser->isAdmin()) {
+            echo json_encode(['success' => false, 'message' => 'Admin access required']);
+            break;
+        }
+        $userId = intval($_POST['user_id'] ?? 0);
+
+        if ($userId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid user ID']);
+            break;
+        }
+
+        try {
+            $colCheck = $pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
+            if (!$colCheck->fetch()) {
+                echo json_encode(['success' => false, 'message' => 'Ban system not initialized']);
+                break;
+            }
+
+            $stmt = $pdo->prepare("UPDATE users SET banned = 0, ban_reason = '' WHERE id = ?");
+            if ($stmt->execute([$userId])) {
+                echo json_encode(['success' => true, 'message' => 'User unbanned successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to unban user']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'admin_remove_avatar':
+        if (!$currentUser->isAdmin()) {
+            echo json_encode(['success' => false, 'message' => 'Admin access required']);
+            break;
+        }
+        $userId = intval($_POST['user_id'] ?? 0);
+
+        if ($userId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid user ID']);
+            break;
+        }
+
+        try {
+            $stmt = $pdo->prepare("UPDATE users SET avatar = '' WHERE id = ?");
+            if ($stmt->execute([$userId])) {
+                echo json_encode(['success' => true, 'message' => 'Avatar removed successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to remove avatar']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'admin_delete_user':
+        if (!$currentUser->isAdmin()) {
+            echo json_encode(['success' => false, 'message' => 'Admin access required']);
+            break;
+        }
+        $userId = intval($_POST['user_id'] ?? 0);
+
+        if ($userId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid user ID']);
+            break;
+        }
+
+        if ($userId === $currentUser->getId()) {
+            echo json_encode(['success' => false, 'message' => 'Cannot delete your own account']);
+            break;
+        }
+
+        $delUser = new User($pdo);
+        if ($delUser->loadById($userId)) {
+            if ($delUser->delete()) {
+                echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to delete user']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'User not found']);
+        }
+        break;
+
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
         break;

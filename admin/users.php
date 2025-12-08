@@ -26,126 +26,6 @@ if (!$currentUser->isAdmin()) {
     exit;
 }
 
-$message = '';
-$error = '';
-
-// Handle user actions
-if ($_POST['action'] ?? '' === 'update_user') {
-    $userId = intval($_POST['user_id']);
-    $editUser = new User($pdo);
-
-    if ($editUser->loadById($userId)) {
-        $editUser->setUsername(trim($_POST['username']));
-        $editUser->setEmail(trim($_POST['email']));
-        $editUser->setBalance(floatval($_POST['balance']));
-        $isAdmin = false;
-        if (isset($_POST['role'])) {
-            $isAdmin = $_POST['role'] === 'admin';
-        } elseif (isset($_POST['admin'])) {
-            $isAdmin = (bool)$_POST['admin'];
-        }
-        $editUser->setAdmin($isAdmin);
-
-        if ($editUser->save()) {
-            $message = 'User updated successfully!';
-        } else {
-            $error = 'Failed to update user.';
-        }
-    }
-}
-// Handle ban user action
-if ($_POST['action'] ?? '' === 'ban_user') {
-    $userId = intval($_POST['user_id'] ?? 0);
-    $reason = trim($_POST['ban_reason'] ?? '');
-    if ($userId > 0) {
-        if ($userId === $currentUser->getId()) {
-            $error = 'Cannot ban your own account from this panel.';
-        } else {
-            try {
-                $colCheck = $pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
-                $hasBanned = $colCheck->fetch() !== false;
-            } catch (Exception $e) {
-                $hasBanned = false;
-            }
-            if (!$hasBanned) {
-                try {
-                    $pdo->exec("ALTER TABLE users ADD COLUMN banned TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN ban_reason VARCHAR(255) NULL");
-                } catch (Exception $e) {
-                    $error = 'Failed to update schema for banning: ' . $e->getMessage();
-                }
-            }
-            if (empty($error)) {
-                $stmt = $pdo->prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?");
-                if ($stmt->execute([$reason, $userId])) {
-                    $message = 'User banned.';
-                } else {
-                    $error = 'Failed to ban user.';
-                }
-            }
-        }
-    }
-}
-
-// Handle unban user action
-if ($_POST['action'] ?? '' === 'unban_user') {
-    $userId = intval($_POST['user_id'] ?? 0);
-    if ($userId > 0) {
-        try {
-            $colCheck = $pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
-            $hasBanned = $colCheck->fetch() !== false;
-        } catch (Exception $e) {
-            $hasBanned = false;
-        }
-        if (!$hasBanned) {
-            $error = 'Schema missing ban columns; nothing to unban.';
-        } else {
-            $stmt = $pdo->prepare("UPDATE users SET banned = 0, ban_reason = '' WHERE id = ?");
-            if ($stmt->execute([$userId])) {
-                $message = 'User unbanned.';
-            } else {
-                $error = 'Failed to unban user.';
-            }
-        }
-    }
-}
-
-// Handle delete user action
-if ($_POST['action'] ?? '' === 'delete_user') {
-    $userId = intval($_POST['user_id'] ?? 0);
-    if ($userId > 0) {
-        if ($userId === $currentUser->getId()) {
-            $error = 'Cannot delete your own account from this panel.';
-        } else {
-            $delUser = new User($pdo);
-            if ($delUser->loadById($userId)) {
-                if ($delUser->delete()) {
-                    $message = 'User deleted successfully.';
-                } else {
-                    $error = 'Failed to delete user.';
-                }
-            } else {
-                $error = 'User not found.';
-            }
-        }
-    }
-}
-
-// Handle remove avatar action
-if ($_POST['action'] ?? '' === 'remove_avatar') {
-    $userId = intval($_POST['user_id'] ?? 0);
-    if ($userId > 0) {
-        $u = new User($pdo);
-        if ($u->loadById($userId)) {
-            $u->setAvatar('');
-            if ($u->save()) {
-                $message = 'Avatar removed.';
-            } else {
-                $error = 'Failed to remove avatar.';
-            }
-        }
-    }
-}
-
 // Get filter parameters
 $filters = [
     'search' => trim($_GET['search'] ?? ''),
@@ -159,26 +39,8 @@ $filters = [
 $users = User::getAllUsers($pdo, $filters);
 
 // Get total count for pagination
-$countQuery = "SELECT COUNT(*) FROM users WHERE 1=1";
-$countParams = [];
-if ($filters['search']) {
-    $countQuery .= " AND (username LIKE ? OR email LIKE ?)";
-    $countParams[] = '%' . $filters['search'] . '%';
-    $countParams[] = '%' . $filters['search'] . '%';
-}
-if ($filters['admin'] !== null) {
-    $countQuery .= " AND admin = ?";
-    $countParams[] = $filters['admin'];
-}
-if ($filters['banned'] !== null) {
-    $countQuery .= " AND banned = ?";
-    $countParams[] = $filters['banned'];
-}
-
-$stmt = $pdo->prepare($countQuery);
-$stmt->execute($countParams);
-$totalUsers = $stmt->fetchColumn();
-$totalPages = ceil($totalUsers / 20);
+$totalUsers = User::countUsers($pdo, $filters);
+$totalPages = ceil($totalUsers / ($filters['limit'] ?? 20));
 $currentPage = intval($_GET['page'] ?? 0);
 
 $pageTitle = 'User Management';
@@ -243,18 +105,20 @@ $pageTitle = 'User Management';
                 </div>
 
                 <?php if ($message): ?>
-                    <div class="alert alert-success alert-dismissible fade show">
+                    <div class="alert alert-success alert-dismissible fade show" id="message-alert">
                         <?= htmlspecialchars($message) ?>
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($error): ?>
-                    <div class="alert alert-danger alert-dismissible fade show">
+                    <div class="alert alert-danger alert-dismissible fade show" id="error-alert">
                         <?= htmlspecialchars($error) ?>
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                     </div>
                 <?php endif; ?>
+
+                <div id="ajax-message-container"></div>
 
                 <!-- Filters -->
                 <div class="admin-filter-bar">
@@ -283,10 +147,7 @@ $pageTitle = 'User Management';
                             <button type="submit" class="btn btn-primary">Filter</button>
                             <a href="users.php" class="btn btn-secondary">Clear</a>
                         </div>
-                    </form>
-                </div>
-
-                <!-- Users Table -->
+                </div> <!-- Users Table -->
                 <div class="card">
                     <div class="card-body">
                         <?php if (!empty($users)): ?>
@@ -308,7 +169,7 @@ $pageTitle = 'User Management';
                                     </thead>
                                     <tbody>
                                         <?php foreach ($users as $userRow): ?>
-                                            <tr class="<?= $userRow['banned'] ? 'table-danger' : '' ?>">
+                                            <tr class="<?= $userRow['banned'] ? 'table-danger' : '' ?>" data-user-id="<?= $userRow['id'] ?>">
                                                 <td><?= $userRow['id'] ?></td>
                                                 <td>
                                                     <strong><?= htmlspecialchars($userRow['username']) ?></strong>
@@ -336,148 +197,129 @@ $pageTitle = 'User Management';
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#editUserModal<?= $userRow['id'] ?>">
+                                                    <div class="admin-user-actions">
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#editUserModal<?= $userRow['id'] ?>">
                                                             Edit
                                                         </button>
                                                         <?php if ($userRow['id'] !== $currentUser->getId()): ?>
                                                             <?php if ($userRow['banned']): ?>
-                                                                <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#unbanUserModal<?= $userRow['id'] ?>">
+                                                                <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#unbanUserModal<?= $userRow['id'] ?>">
                                                                     Unban
                                                                 </button>
                                                             <?php else: ?>
-                                                                <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#banUserModal<?= $userRow['id'] ?>">
+                                                                <button type="button" class="btn btn-outline-danger btn-sm" data-toggle="modal" data-target="#banUserModal<?= $userRow['id'] ?>">
                                                                     Ban
                                                                 </button>
                                                             <?php endif; ?>
 
-                                                            <!-- Remove avatar -->
-                                                            <form method="post" style="display:inline;margin-left:4px;" onsubmit="return confirm('Remove avatar for <?= htmlspecialchars($userRow['username']) ?>?');">
-                                                                <input type="hidden" name="action" value="remove_avatar">
-                                                                <input type="hidden" name="user_id" value="<?= $userRow['id'] ?>">
-                                                                <button type="submit" class="btn btn-outline-secondary">Remove Avatar</button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm remove-avatar-btn" data-user-id="<?= $userRow['id'] ?>" data-username="<?= htmlspecialchars($userRow['username']) ?>">
+                                                                Remove Avatar
+                                                            </button>
 
-                                                            <!-- Delete user -->
-                                                            <form method="post" style="display:inline;margin-left:4px;" onsubmit="return confirm('Delete user <?= htmlspecialchars($userRow['username']) ?> and all their data? This cannot be undone.');">
-                                                                <input type="hidden" name="action" value="delete_user">
-                                                                <input type="hidden" name="user_id" value="<?= $userRow['id'] ?>">
-                                                                <button type="submit" class="btn btn-outline-danger">Delete</button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-outline-danger btn-sm delete-user-btn" data-user-id="<?= $userRow['id'] ?>" data-username="<?= htmlspecialchars($userRow['username']) ?>">
+                                                                Delete
+                                                            </button>
                                                         <?php endif; ?>
                                                     </div>
                                                 </td>
                                             </tr>
-
-                                            <!-- Edit User Modal -->
-                                            <div class="modal fade" id="editUserModal<?= $userRow['id'] ?>" tabindex="-1">
-                                                <div class="modal-dialog">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title">Edit User: <?= htmlspecialchars($userRow['username']) ?></h5>
-                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                        </div>
-                                                        <form method="post">
-                                                            <div class="modal-body">
-                                                                <input type="hidden" name="action" value="update_user">
-                                                                <input type="hidden" name="user_id" value="<?= $userRow['id'] ?>">
-
-                                                                <div class="form-group">
-                                                                    <label>Username</label>
-                                                                    <input type="text" class="form-control" name="username" value="<?= htmlspecialchars($userRow['username']) ?>" required>
-                                                                </div>
-
-                                                                <div class="form-group">
-                                                                    <label>Email</label>
-                                                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($userRow['email']) ?>" required>
-                                                                </div>
-
-                                                                <div class="form-group">
-                                                                    <label>Balance</label>
-                                                                    <input type="number" step="0.01" class="form-control" name="balance" value="<?= $userRow['balance'] ?>">
-                                                                </div>
-
-                                                                <div class="form-group">
-                                                                    <label>Role</label>
-                                                                    <select class="form-control" name="role">
-                                                                        <option value="user" <?= ($userRow['role'] ?? 'user') === 'user' ? 'selected' : '' ?>>User</option>
-                                                                        <option value="moderator" <?= $userRow['role'] === 'moderator' ? 'selected' : '' ?>>Moderator</option>
-                                                                        <option value="admin" <?= $userRow['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                                <button type="submit" class="btn btn-primary">Save Changes</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Ban User Modal -->
-                                            <?php if ($userRow['id'] !== $currentUser->getId() && !$userRow['banned']): ?>
-                                                <div class="modal fade" id="banUserModal<?= $userRow['id'] ?>" tabindex="-1">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title">Ban User: <?= htmlspecialchars($userRow['username']) ?></h5>
-                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <form method="post">
-                                                                <div class="modal-body">
-                                                                    <input type="hidden" name="action" value="ban_user">
-                                                                    <input type="hidden" name="user_id" value="<?= $userRow['id'] ?>">
-
-                                                                    <p>Are you sure you want to ban this user?</p>
-
-                                                                    <div class="form-group">
-                                                                        <label>Ban Reason</label>
-                                                                        <textarea class="form-control" name="ban_reason" rows="3" placeholder="Enter reason for ban..." required></textarea>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                                    <button type="submit" class="btn btn-danger">Ban User</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            <?php endif; ?>
-
-                                            <!-- Unban User Modal -->
-                                            <?php if ($userRow['banned']): ?>
-                                                <div class="modal fade" id="unbanUserModal<?= $userRow['id'] ?>" tabindex="-1">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title">Unban User: <?= htmlspecialchars($userRow['username']) ?></h5>
-                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <form method="post">
-                                                                <div class="modal-body">
-                                                                    <input type="hidden" name="action" value="unban_user">
-                                                                    <input type="hidden" name="user_id" value="<?= $userRow['id'] ?>">
-
-                                                                    <p>Are you sure you want to unban this user?</p>
-                                                                    <?php if ($userRow['ban_reason']): ?>
-                                                                        <p><strong>Ban Reason:</strong> <?= htmlspecialchars($userRow['ban_reason']) ?></p>
-                                                                    <?php endif; ?>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                                    <button type="submit" class="btn btn-success">Unban User</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            <?php endif; ?>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- All Modals -->
+                            <?php foreach ($users as $userRow): ?>
+                                <div class="modal fade" id="editUserModal<?= $userRow['id'] ?>" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit User: <?= htmlspecialchars($userRow['username']) ?></h5>
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                    <label>Username</label>
+                                                    <input type="text" class="form-control edit-username" data-user-id="<?= $userRow['id'] ?>" value="<?= htmlspecialchars($userRow['username']) ?>" required>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Email</label>
+                                                    <input type="email" class="form-control edit-email" data-user-id="<?= $userRow['id'] ?>" value="<?= htmlspecialchars($userRow['email']) ?>" required>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Balance</label>
+                                                    <input type="number" step="0.01" class="form-control edit-balance" data-user-id="<?= $userRow['id'] ?>" value="<?= $userRow['balance'] ?>">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Role</label>
+                                                    <select class="form-control edit-role" data-user-id="<?= $userRow['id'] ?>">
+                                                        <option value="user" <?= ($userRow['role'] ?? 'user') === 'user' ? 'selected' : '' ?>>User</option>
+                                                        <option value="moderator" <?= $userRow['role'] === 'moderator' ? 'selected' : '' ?>>Moderator</option>
+                                                        <option value="admin" <?= $userRow['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                <button type="button" class="btn btn-primary save-user-btn" data-user-id="<?= $userRow['id'] ?>">Save Changes</button>
+                                            </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Ban User Modal -->
+                                <?php if ($userRow['id'] !== $currentUser->getId() && !$userRow['banned']): ?>
+                                    <div class="modal fade" id="banUserModal<?= $userRow['id'] ?>" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Ban User: <?= htmlspecialchars($userRow['username']) ?></h5>
+                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to ban <strong><?= htmlspecialchars($userRow['username']) ?></strong>?</p>
+                                                    <div class="form-group">
+                                                        <label>Ban Reason</label>
+                                                        <textarea class="form-control ban-reason" data-user-id="<?= $userRow['id'] ?>" rows="3" placeholder="Enter reason for ban..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                    <button type="button" class="btn btn-danger ban-user-btn" data-user-id="<?= $userRow['id'] ?>" data-username="<?= htmlspecialchars($userRow['username']) ?>">Ban User</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <!-- Unban User Modal -->
+                                <?php if ($userRow['banned']): ?>
+                                    <div class="modal fade" id="unbanUserModal<?= $userRow['id'] ?>" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Unban User: <?= htmlspecialchars($userRow['username']) ?></h5>
+                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to unban <strong><?= htmlspecialchars($userRow['username']) ?></strong>?</p>
+                                                    <?php if ($userRow['ban_reason']): ?>
+                                                        <p><strong>Ban Reason:</strong> <?= htmlspecialchars($userRow['ban_reason']) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                    <button type="button" class="btn btn-success unban-user-btn" data-user-id="<?= $userRow['id'] ?>" data-username="<?= htmlspecialchars($userRow['username']) ?>">Unban User</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
 
                             <!-- Pagination -->
                             <?php if ($totalPages > 1): ?>
@@ -516,9 +358,240 @@ $pageTitle = 'User Management';
         </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies for modals -->
+    <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Show message function
+            function showMessage(message, type = 'success') {
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            `;
+                $('#ajax-message-container').html(alertHtml);
+
+                // Scroll to message
+                $('html, body').animate({
+                    scrollTop: $('#ajax-message-container').offset().top - 100
+                }, 300);
+
+                // Auto-dismiss after 5 seconds
+                setTimeout(function() {
+                    $('#ajax-message-container .alert').fadeOut(function() {
+                        $(this).remove();
+                    });
+                }, 5000);
+            }
+
+            // Save user (Edit)
+            $(document).on('click', '.save-user-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const userId = $(this).data('user-id');
+                const username = $(`.edit-username[data-user-id="${userId}"]`).val();
+                const email = $(`.edit-email[data-user-id="${userId}"]`).val();
+                const balance = $(`.edit-balance[data-user-id="${userId}"]`).val();
+                const role = $(`.edit-role[data-user-id="${userId}"]`).val();
+
+                if (!username || !email) {
+                    showMessage('Username and email are required.', 'error');
+                    return;
+                }
+
+                $.ajax({
+                    url: '../ajax_handler.php',
+                    method: 'POST',
+                    data: {
+                        action: 'admin_update_user',
+                        user_id: userId,
+                        username: username,
+                        email: email,
+                        balance: balance,
+                        role: role
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage(response.message || 'User updated successfully!', 'success');
+                            $(`#editUserModal${userId}`).modal('hide');
+
+                            // Auto-reload page
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
+                        } else {
+                            showMessage(response.message || 'Failed to update user.', 'error');
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred while updating the user.', 'error');
+                    }
+                });
+            });
+
+            // Ban user
+            $(document).on('click', '.ban-user-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const userId = $(this).data('user-id');
+                const username = $(this).data('username');
+                const banReason = $(`.ban-reason[data-user-id="${userId}"]`).val();
+
+                $.ajax({
+                    url: '../ajax_handler.php',
+                    method: 'POST',
+                    data: {
+                        action: 'admin_ban_user',
+                        user_id: userId,
+                        ban_reason: banReason
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            $(`#banUserModal${userId}`).modal('hide');
+                            showMessage(response.message || `User "${username}" banned successfully.`, 'success');
+
+                            // Auto-reload page
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
+                        } else {
+                            showMessage(response.message || 'Failed to ban user.', 'error');
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred while banning the user.', 'error');
+                    }
+                });
+            });
+
+            // Unban user
+            $(document).on('click', '.unban-user-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const userId = $(this).data('user-id');
+                const username = $(this).data('username');
+
+                $.ajax({
+                    url: '../ajax_handler.php',
+                    method: 'POST',
+                    data: {
+                        action: 'admin_unban_user',
+                        user_id: userId
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            $(`#unbanUserModal${userId}`).modal('hide');
+                            showMessage(response.message || `User "${username}" unbanned successfully.`, 'success');
+
+                            // Auto-reload page
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
+                        } else {
+                            showMessage(response.message || 'Failed to unban user.', 'error');
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred while unbanning the user.', 'error');
+                    }
+                });
+            });
+
+            // Remove avatar
+            $(document).on('click', '.remove-avatar-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const userId = $(this).data('user-id');
+                const username = $(this).data('username');
+
+                if (!confirm(`Remove avatar for ${username}?`)) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '../ajax_handler.php',
+                    method: 'POST',
+                    data: {
+                        action: 'admin_remove_avatar',
+                        user_id: userId
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage(response.message || 'Avatar removed successfully.', 'success');
+
+                            // Auto-reload page
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
+                        } else {
+                            showMessage(response.message || 'Failed to remove avatar.', 'error');
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred while removing the avatar.', 'error');
+                    }
+                });
+            });
+
+            // Delete user
+            $(document).on('click', '.delete-user-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const userId = $(this).data('user-id');
+                const username = $(this).data('username');
+
+                if (!confirm(`Delete user "${username}" and all their data? This cannot be undone.`)) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '../ajax_handler.php',
+                    method: 'POST',
+                    data: {
+                        action: 'admin_delete_user',
+                        user_id: userId
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage(response.message || 'User deleted successfully.', 'success');
+
+                            // Remove the row from table
+                            $(`tr[data-user-id="${userId}"]`).fadeOut(function() {
+                                $(this).remove();
+                            });
+                        } else {
+                            showMessage(response.message || 'Failed to delete user.', 'error');
+                        }
+                    },
+                    error: function() {
+                        showMessage('An error occurred while deleting the user.', 'error');
+                    }
+                });
+            });
+
+            // Prevent modal forms from submitting on Enter key
+            $('.modal').on('keypress', 'input, textarea', function(e) {
+                if (e.which === 13 && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    </script>
 
     <?php include '../inc/footer.inc.php'; ?>
 </body>

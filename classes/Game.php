@@ -292,6 +292,18 @@ class Game
     }
 
     /**
+     * Count all games (helper for dashboards)
+     * @param PDO $pdo
+     * @return int
+     */
+    public static function countAllGames($pdo)
+    {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM game");
+        $stmt->execute();
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Get games by category
      */
     public static function getByCategory($pdo, $categoryId)
