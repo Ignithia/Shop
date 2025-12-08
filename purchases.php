@@ -23,7 +23,7 @@ try {
     $database = Database::getInstance();
     $pdo = $database->getConnection();
     $currentUser = User::getCurrentUser($pdo);
-    
+
     if (!$currentUser) {
         header('Location: login.php');
         exit();
@@ -40,35 +40,37 @@ $offset = ($page - 1) * $limit;
 $purchases = $currentUser->getPurchaseHistory($limit, $offset);
 
 // Get total purchases for pagination
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM library WHERE fk_user = ?");
-$stmt->execute([$currentUser->getId()]);
-$total_purchases = $stmt->fetchColumn();
+$total_purchases = $currentUser->getPurchaseCount();
 $total_pages = ceil($total_purchases / $limit);
 
-function formatCoins($amount) {
+function formatCoins($amount)
+{
     return number_format($amount, 0) . ' coins';
 }
 
-function timeAgo($datetime) {
+function timeAgo($datetime)
+{
     $time = time() - strtotime($datetime);
     if ($time < 60) return 'just now';
-    if ($time < 3600) return floor($time/60) . ' minutes ago';
-    if ($time < 86400) return floor($time/3600) . ' hours ago';
-    if ($time < 2592000) return floor($time/86400) . ' days ago';
+    if ($time < 3600) return floor($time / 60) . ' minutes ago';
+    if ($time < 86400) return floor($time / 3600) . ' hours ago';
+    if ($time < 2592000) return floor($time / 86400) . ' days ago';
     return date('M j, Y', strtotime($datetime));
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase History - Gaming Store</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
     <?php include 'inc/header.inc.php'; ?>
-    
+
     <div class="container">
         <div class="purchases-header">
             <h1>📋 Purchase History</h1>
@@ -138,11 +140,11 @@ function timeAgo($datetime) {
                         <?php
                         $start_page = max(1, $page - 2);
                         $end_page = min($total_pages, $page + 2);
-                        
+
                         for ($i = $start_page; $i <= $end_page; $i++):
                         ?>
-                            <a href="?page=<?php echo $i; ?>" 
-                               class="page-btn <?php echo ($i == $page) ? 'active' : ''; ?>">
+                            <a href="?page=<?php echo $i; ?>"
+                                class="page-btn <?php echo ($i == $page) ? 'active' : ''; ?>">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>
@@ -173,9 +175,9 @@ function timeAgo($datetime) {
                 <div class="summary-item">
                     <div class="summary-label">Average Purchase</div>
                     <div class="summary-value">
-                        <?php 
+                        <?php
                         $avg = $total_purchases > 0 ? $currentUser->getTotalSpent() / $total_purchases : 0;
-                        echo formatCoins($avg); 
+                        echo formatCoins($avg);
                         ?>
                     </div>
                 </div>
@@ -203,4 +205,5 @@ function timeAgo($datetime) {
 
     <?php include 'inc/footer.inc.php'; ?>
 </body>
+
 </html>

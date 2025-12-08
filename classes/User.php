@@ -593,6 +593,19 @@ class User
     }
 
     /**
+     * Get count of purchases (items in library)
+     * @return int
+     */
+    public function getPurchaseCount()
+    {
+        if (!$this->pdo || !$this->id) return 0;
+
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM library WHERE fk_user = ?");
+        $stmt->execute([$this->id]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
      * Get all users with library stats (admin only)
      */
     public static function getAllUsers($pdo, $filters = [])
@@ -927,5 +940,77 @@ class User
             header("Location: $redirectTo");
             exit();
         }
+    }
+
+    /**
+     * Ban a user (admin only)
+     * @param int $userId
+     * @param string $reason
+     * @return bool
+     */
+    public function banUser($userId, $reason = '')
+    {
+        if (!$this->pdo || !$this->isAdmin()) return false;
+        if ($userId === $this->id) return false; // Can't ban self
+
+        // Ensure columns exist
+        try {
+            $colCheck = $this->pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
+            if (!$colCheck->fetch()) {
+                $this->pdo->exec("ALTER TABLE users ADD COLUMN banned TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN ban_reason VARCHAR(255) NULL");
+            }
+        } catch (Exception $e) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?");
+        return $stmt->execute([$reason, $userId]);
+    }
+
+    /**
+     * Unban a user (admin only)
+     * @param int $userId
+     * @return bool
+     */
+    public function unbanUser($userId)
+    {
+        if (!$this->pdo || !$this->isAdmin()) return false;
+
+        try {
+            $colCheck = $this->pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
+            if (!$colCheck->fetch()) return false;
+        } catch (Exception $e) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE users SET banned = 0, ban_reason = '' WHERE id = ?");
+        return $stmt->execute([$userId]);
+    }
+
+    /**
+     * Remove avatar for a user (admin only)
+     * @param int $userId
+     * @return bool
+     */
+    public function removeUserAvatar($userId)
+    {
+        if (!$this->pdo || !$this->isAdmin()) return false;
+
+        $stmt = $this->pdo->prepare("UPDATE users SET avatar = '' WHERE id = ?");
+        return $stmt->execute([$userId]);
+    }
+
+    /**
+     * Search users by username
+     * @param PDO $pdo
+     * @param string $query
+     * @param int $limit
+     * @return array
+     */
+    public static function searchUsers($pdo, $query, $limit = 10)
+    {
+        $stmt = $pdo->prepare("SELECT id, username FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT ?");
+        $stmt->execute(['%' . $query . '%', $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

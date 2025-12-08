@@ -10,9 +10,9 @@ vereisten voldoet.
 [X] | Gebruiker kan bestellingen bekijken
 [X] | Noodzakelijke controles werken (prijs > 0, voldoende cash, ...)
 [X] | Het project staat online en werkt
-[ ] | XSS-aanvallen zijn voorkomen
-[ ] | SQL-injectie-aanvallen zijn voorkomen
-[ ] | GIT commit messages voldoen aan conventies
+[X] | XSS-aanvallen zijn voorkomen
+[X] | SQL-injectie-aanvallen zijn voorkomen
+[X] | GIT commit messages voldoen aan conventies
 [X] | Correct gebruik van OOP door middel van meerdere klassen
 [X] | In de frontend is nergens een spoor van SQL terug te vinden, enkel in de
 klasse-bestanden

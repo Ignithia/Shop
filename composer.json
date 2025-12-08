@@ -1,6 +1,21 @@
 {
+  "name": "ignithia/winkel-shop",
+  "description": "Gaming webshop",
+  "type": "project",
   "require": {
+    "php": ">=7.4",
     "vlucas/phpdotenv": "^5.6",
     "ext-pdo_mysql": "*"
-  }
+  },
+  "autoload": {
+    "psr-4": {
+      "Winkel\\": "classes/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Ignithia"
+    }
+  ],
+  "minimum-stability": "stable"
 }

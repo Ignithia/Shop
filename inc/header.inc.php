@@ -7,7 +7,11 @@ if (!isset($_SESSION)) {
 if (!class_exists('Database')) {
     require_once __DIR__ . '/../classes/Database.php';
     require_once __DIR__ . '/../classes/User.php';
+    require_once __DIR__ . '/../classes/CSRF.php';
 }
+
+// Generate CSRF token for this session
+CSRF::generateToken();
 
 /* Get current user data if logged in */
 $username = 'Guest';
@@ -91,3 +95,4 @@ $__href = function ($path) use ($__in_admin) {
         </div>
     </div>
 </header>
+<?php include __DIR__ . '/csrf.inc.php'; ?>

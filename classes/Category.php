@@ -113,11 +113,14 @@ class Category
 
     /**
      * Find category by name
+     * @param PDO $pdo
+     * @param string $name
+     * @return int|false Category ID or false if not found
      */
     public static function findByName($pdo, $name)
     {
-        $stmt = $pdo->prepare("SELECT * FROM category WHERE name = ? LIMIT 1");
-        $stmt->execute([$name]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare("SELECT id FROM category WHERE LOWER(name) = ?");
+        $stmt->execute([strtolower($name)]);
+        return $stmt->fetchColumn();
     }
 }

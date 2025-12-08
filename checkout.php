@@ -3,6 +3,7 @@
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
+require_once 'classes/CSRF.php';
 
 session_start();
 
@@ -40,6 +41,10 @@ foreach ($cart_items as $game) {
 
 // Handle purchase
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'purchase') {
+    if (!CSRF::validatePost()) {
+        die('Invalid CSRF token');
+    }
+
     if ($currentUser->getBalance() >= $total_price && !empty($cart_items)) {
         $transaction_started = false;
         try {

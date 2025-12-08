@@ -4,9 +4,15 @@ require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
 require_once 'classes/Friend.php';
+require_once 'classes/CSRF.php';
 
 session_start();
 header('Content-Type: application/json');
+
+// Check CSRF token for all POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    CSRF::requireValidToken();
+}
 
 // Check if user is logged in
 if (!User::isLoggedIn()) {
@@ -121,28 +127,8 @@ switch ($action) {
             exit();
         }
 
-        $sql = "SELECT g.*, c.name as category_name 
-                FROM game g 
-                LEFT JOIN category c ON g.fk_category = c.id 
-                WHERE 1=1";
-        $params = [];
-
-        if (!empty($query)) {
-            $sql .= " AND (g.name LIKE ? OR g.description LIKE ?)";
-            $params[] = "%$query%";
-            $params[] = "%$query%";
-        }
-
-        if (!empty($category) && $category !== 'all') {
-            $sql .= " AND g.fk_category = ?";
-            $params[] = intval($category);
-        }
-
-        $sql .= " ORDER BY g.name ASC LIMIT 50";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $categoryId = (!empty($category) && $category !== 'all') ? intval($category) : null;
+        $games = Game::searchGames($pdo, $query, $categoryId, 50);
 
         echo json_encode([
             'success' => true,
@@ -161,9 +147,7 @@ switch ($action) {
         $results = [];
         // search users
         if ($type === 'all' || $type === 'user') {
-            $stmt = $pdo->prepare("SELECT id, username FROM users WHERE username LIKE ? ORDER BY username ASC LIMIT 10");
-            $stmt->execute(["%$q%"]);
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $users = User::searchUsers($pdo, $q, 10);
             foreach ($users as $u) {
                 $results[] = [
                     'type' => 'user',
@@ -175,9 +159,7 @@ switch ($action) {
         }
         // search games
         if ($type === 'all' || $type === 'game') {
-            $stmt = $pdo->prepare("SELECT id, name FROM game WHERE name LIKE ? ORDER BY name ASC LIMIT 10");
-            $stmt->execute(["%$q%"]);
-            $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $games = Game::searchGamesByName($pdo, $q, 10);
             foreach ($games as $g) {
                 $results[] = [
                     'type' => 'game',
@@ -327,32 +309,18 @@ switch ($action) {
             break;
         }
 
-        try {
-            // Ensure ban columns exist
-            $colCheck = $pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
-            if (!$colCheck->fetch()) {
-                $pdo->exec("ALTER TABLE users ADD COLUMN banned TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN ban_reason VARCHAR(255) NULL");
-            }
+        // Verify user exists
+        $targetUser = new User($pdo);
+        if (!$targetUser->loadById($userId)) {
+            echo json_encode(['success' => false, 'message' => 'User not found']);
+            break;
+        }
 
-            // Verify user exists
-            $checkStmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
-            $checkStmt->execute([$userId]);
-            $targetUser = $checkStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$targetUser) {
-                echo json_encode(['success' => false, 'message' => 'User not found']);
-                break;
-            }
-
-            // Ban the user
-            $stmt = $pdo->prepare("UPDATE users SET banned = 1, ban_reason = ? WHERE id = ?");
-            if ($stmt->execute([$banReason, $userId])) {
-                echo json_encode(['success' => true, 'message' => 'User "' . $targetUser['username'] . '" banned successfully']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Failed to ban user']);
-            }
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        // Ban user
+        if ($currentUser->banUser($userId, $banReason)) {
+            echo json_encode(['success' => true, 'message' => 'User "' . $targetUser->getUsername() . '" banned successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to ban user']);
         }
         break;
 
@@ -368,21 +336,11 @@ switch ($action) {
             break;
         }
 
-        try {
-            $colCheck = $pdo->query("SHOW COLUMNS FROM users LIKE 'banned'");
-            if (!$colCheck->fetch()) {
-                echo json_encode(['success' => false, 'message' => 'Ban system not initialized']);
-                break;
-            }
-
-            $stmt = $pdo->prepare("UPDATE users SET banned = 0, ban_reason = '' WHERE id = ?");
-            if ($stmt->execute([$userId])) {
-                echo json_encode(['success' => true, 'message' => 'User unbanned successfully']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Failed to unban user']);
-            }
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        // Unban user
+        if ($currentUser->unbanUser($userId)) {
+            echo json_encode(['success' => true, 'message' => 'User unbanned successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to unban user']);
         }
         break;
 
@@ -398,15 +356,11 @@ switch ($action) {
             break;
         }
 
-        try {
-            $stmt = $pdo->prepare("UPDATE users SET avatar = '' WHERE id = ?");
-            if ($stmt->execute([$userId])) {
-                echo json_encode(['success' => true, 'message' => 'Avatar removed successfully']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Failed to remove avatar']);
-            }
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        // Remove avatar
+        if ($currentUser->removeUserAvatar($userId)) {
+            echo json_encode(['success' => true, 'message' => 'Avatar removed successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to remove avatar']);
         }
         break;
 

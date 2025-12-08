@@ -621,6 +621,54 @@ class Game
     }
 
     /**
+     * Search games by query and optional category
+     * @param PDO $pdo
+     * @param string $query
+     * @param int|null $categoryId
+     * @param int $limit
+     * @return array
+     */
+    public static function searchGames($pdo, $query = '', $categoryId = null, $limit = 50)
+    {
+        $sql = "SELECT g.*, c.name as category_name 
+                FROM game g 
+                LEFT JOIN category c ON g.fk_category = c.id 
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($query)) {
+            $sql .= " AND (g.name LIKE ? OR g.description LIKE ?)";
+            $params[] = "%$query%";
+            $params[] = "%$query%";
+        }
+
+        if ($categoryId !== null) {
+            $sql .= " AND g.fk_category = ?";
+            $params[] = intval($categoryId);
+        }
+
+        $sql .= " ORDER BY g.name ASC LIMIT " . intval($limit);
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Search games by name only (simplified)
+     * @param PDO $pdo
+     * @param string $query
+     * @param int $limit
+     * @return array
+     */
+    public static function searchGamesByName($pdo, $query, $limit = 10)
+    {
+        $stmt = $pdo->prepare("SELECT id, name FROM game WHERE name LIKE ? ORDER BY name ASC LIMIT ?");
+        $stmt->execute(['%' . $query . '%', $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get game statistics
      * @param PDO $pdo Database connection
      * @return array

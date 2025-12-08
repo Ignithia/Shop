@@ -2,6 +2,7 @@
 require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
+require_once 'classes/Category.php';
 
 session_start();
 
@@ -59,9 +60,7 @@ if (!empty($search_query)) {
 }
 if ($selected_category !== 'all') {
     // Find category ID by name
-    $stmt = $pdo->prepare("SELECT id FROM category WHERE LOWER(name) = ?");
-    $stmt->execute([strtolower($selected_category)]);
-    $category_id = $stmt->fetchColumn();
+    $category_id = Category::findByName($pdo, $selected_category);
     if ($category_id) {
         $filters['category'] = $category_id;
     }
