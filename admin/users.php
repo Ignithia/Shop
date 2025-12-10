@@ -257,7 +257,6 @@ $pageTitle = 'User Management';
                                                     <label>Role</label>
                                                     <select class="form-control edit-role" data-user-id="<?= $userRow['id'] ?>">
                                                         <option value="user" <?= ($userRow['role'] ?? 'user') === 'user' ? 'selected' : '' ?>>User</option>
-                                                        <option value="moderator" <?= $userRow['role'] === 'moderator' ? 'selected' : '' ?>>Moderator</option>
                                                         <option value="admin" <?= $userRow['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                                                     </select>
                                                 </div>
