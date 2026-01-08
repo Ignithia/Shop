@@ -304,6 +304,10 @@ class User
             $stmt = $this->pdo->prepare("DELETE FROM review WHERE fk_user = ?");
             $stmt->execute([$this->id]);
 
+            // Delete from friendlist (both incoming and outgoing)
+            $stmt = $this->pdo->prepare("DELETE FROM friendlist WHERE fk_user_out = ? OR fk_user_in = ?");
+            $stmt->execute([$this->id, $this->id]);
+
             // Delete user
             $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ?");
             $stmt->execute([$this->id]);
