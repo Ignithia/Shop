@@ -121,6 +121,7 @@ class Category
     {
         $stmt = $pdo->prepare("SELECT id FROM category WHERE LOWER(name) = ?");
         $stmt->execute([strtolower($name)]);
-        return $stmt->fetchColumn();
+        $result = $stmt->fetchColumn();
+        return $result !== false ? (int)$result : null;
     }
 }
