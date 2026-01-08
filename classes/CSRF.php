@@ -2,13 +2,12 @@
 
 /**
  * CSRF Protection Helper
- * Generates and validates CSRF tokens for forms and AJAX requests
+ * Simple and reliable CSRF token management
  */
 class CSRF
 {
     /**
      * Generate a CSRF token and store it in the session
-     * @return string The generated token
      */
     public static function generateToken()
     {
@@ -24,8 +23,7 @@ class CSRF
     }
 
     /**
-     * Get the current CSRF token
-     * @return string|null
+     * Get the current CSRF token, generate if not exists
      */
     public static function getToken()
     {
@@ -33,9 +31,8 @@ class CSRF
             session_start();
         }
 
-        // Auto-generate token if it doesn't exist
         if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            return self::generateToken();
         }
 
         return $_SESSION['csrf_token'];
@@ -43,8 +40,6 @@ class CSRF
 
     /**
      * Validate a CSRF token
-     * @param string $token The token to validate
-     * @return bool
      */
     public static function validateToken($token)
     {
@@ -52,28 +47,24 @@ class CSRF
             session_start();
         }
 
-        $sessionToken = $_SESSION['csrf_token'] ?? '';
-
-        if (empty($sessionToken) || empty($token)) {
+        if (empty($_SESSION['csrf_token']) || empty($token)) {
             return false;
         }
 
-        return hash_equals($sessionToken, $token);
+        return hash_equals($_SESSION['csrf_token'], $token);
     }
 
     /**
      * Generate a hidden input field with CSRF token
-     * @return string HTML input element
      */
     public static function getTokenField()
     {
-        $token = self::generateToken();
+        $token = self::getToken();
         return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
     }
 
     /**
      * Validate CSRF token from POST request
-     * @return bool
      */
     public static function validatePost()
     {
@@ -82,22 +73,11 @@ class CSRF
     }
 
     /**
-     * Validate CSRF token from request (GET or POST)
-     * @return bool
-     */
-    public static function validateRequest()
-    {
-        $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '';
-        return self::validateToken($token);
-    }
-
-    /**
-     * Check CSRF token and die with JSON error if invalid
-     * Use this in AJAX endpoints
+     * Check CSRF token and return JSON error if invalid
      */
     public static function requireValidToken()
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !self::validatePost()) {
+        if (!self::validatePost()) {
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);

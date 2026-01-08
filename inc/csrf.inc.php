@@ -1,50 +1,80 @@
 <script>
+    // Initialize CSRF token globally
     window.csrfToken = '<?php echo CSRF::getToken(); ?>';
 
-    // Add CSRF token to all AJAX requests
+    // Automatically add CSRF token to all POST AJAX requests
     (function() {
-        // Store original fetch
-        const originalFetch = window.fetch;
+        'use strict';
 
-        window.fetch = function(url, options = {}) {
-            // Add CSRF token to POST requests
-            if (!options.method || options.method.toUpperCase() === 'POST') {
-                if (options.body instanceof FormData) {
-                    options.body.append('csrf_token', window.csrfToken);
-                } else if (options.body instanceof URLSearchParams) {
-                    options.body.append('csrf_token', window.csrfToken);
-                } else if (typeof options.body === 'string') {
-                    const separator = options.body.length > 0 ? '&' : '';
-                    options.body += separator + 'csrf_token=' + encodeURIComponent(window.csrfToken);
-                } else if (options.headers && options.headers['Content-Type'] === 'application/json') {
-                    // For JSON requests, add token to body
-                    try {
-                        const body = JSON.parse(options.body || '{}');
-                        body.csrf_token = window.csrfToken;
-                        options.body = JSON.stringify(body);
-                    } catch (e) {
-                        // If parsing fails, skip
-                    }
-                }
+        // Function to add CSRF to jQuery AJAX
+        function initJQueryCSRF() {
+            if (typeof jQuery === 'undefined') {
+                return false;
             }
 
-            return originalFetch.apply(this, arguments);
-        };
+            // Use ajaxPrefilter - most reliable method
+            jQuery.ajaxPrefilter(function(options) {
+                // Only for POST requests
+                if (options.type && options.type.toUpperCase() === 'POST') {
+                    // Handle different data types
+                    if (!options.data) {
+                        options.data = {};
+                    }
 
-        // Add CSRF token to jQuery AJAX if jQuery is loaded
-        if (typeof jQuery !== 'undefined') {
-            jQuery(document).ajaxSend(function(event, jqxhr, settings) {
-                if (settings.type && settings.type.toUpperCase() === 'POST') {
-                    if (typeof settings.data === 'string') {
-                        const separator = settings.data.length > 0 ? '&' : '';
-                        settings.data += separator + 'csrf_token=' + encodeURIComponent(window.csrfToken);
-                    } else if (settings.data instanceof FormData) {
-                        settings.data.append('csrf_token', window.csrfToken);
-                    } else if (typeof settings.data === 'object') {
-                        settings.data.csrf_token = window.csrfToken;
+                    if (typeof options.data === 'string') {
+                        // URL-encoded string
+                        const separator = options.data.length > 0 ? '&' : '';
+                        options.data += separator + 'csrf_token=' + encodeURIComponent(window.csrfToken);
+                    } else if (options.data instanceof FormData) {
+                        // FormData object
+                        options.data.append('csrf_token', window.csrfToken);
+                    } else if (typeof options.data === 'object') {
+                        // Plain object
+                        options.data.csrf_token = window.csrfToken;
                     }
                 }
             });
+
+            return true;
+        }
+
+        // Function to add CSRF to fetch API
+        function initFetchCSRF() {
+            const originalFetch = window.fetch;
+
+            window.fetch = function(url, options) {
+                options = options || {};
+
+                // Only for POST requests
+                if (!options.method || options.method.toUpperCase() === 'POST') {
+                    if (options.body instanceof FormData) {
+                        options.body.append('csrf_token', window.csrfToken);
+                    } else if (typeof options.body === 'string') {
+                        const separator = options.body.length > 0 ? '&' : '';
+                        options.body += separator + 'csrf_token=' + encodeURIComponent(window.csrfToken);
+                    } else if (options.body instanceof URLSearchParams) {
+                        options.body.append('csrf_token', window.csrfToken);
+                    }
+                }
+
+                return originalFetch.apply(this, arguments);
+            };
+        }
+
+        // Initialize fetch CSRF immediately
+        initFetchCSRF();
+
+        // Initialize jQuery CSRF when available
+        if (typeof jQuery !== 'undefined') {
+            initJQueryCSRF();
+        } else {
+            // Wait for jQuery to load
+            let attempts = 0;
+            const interval = setInterval(function() {
+                if (initJQueryCSRF() || attempts++ > 100) {
+                    clearInterval(interval);
+                }
+            }, 50);
         }
     })();
 </script>

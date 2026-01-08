@@ -361,13 +361,20 @@ $pageTitle = 'User Management';
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Setup CSRF for jQuery after jQuery is loaded -->
+    <script>
+        if (typeof window.setupJQueryCSRF === 'function') {
+            window.setupJQueryCSRF();
+        }
+    </script>
+
     <script>
         $(document).ready(function() {
             // Show message function
             function showMessage(message, type = 'success') {
                 const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
                 const alertHtml = `
-                <div class="alert ${alertClass} alert-dismissible fade show">
+                <div class="alert ${alertClass} alert-dismissible fade show";>
                     ${message}
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
@@ -561,7 +568,7 @@ $pageTitle = 'User Management';
                     method: 'POST',
                     data: {
                         action: 'admin_delete_user',
-                        user_id: userId
+                        user_id: userIdwhat
                     },
                     dataType: 'json',
                     success: function(response) {
@@ -576,7 +583,8 @@ $pageTitle = 'User Management';
                             showMessage(response.message || 'Failed to delete user.', 'error');
                         }
                     },
-                    error: function() {
+                    error: function(xhr) {
+                        console.log('Error:', xhr.responseText);
                         showMessage('An error occurred while deleting the user.', 'error');
                     }
                 });
