@@ -130,7 +130,7 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
             <h2>🛒 Game Shop</h2>
             <p>Discover amazing games and improve your collection!</p>
         </div>
-        php echo htmlspecialchars($search_query); ?>"
+        <?php echo htmlspecialchars($search_query); ?>"
         class="search-input"
         autocomplete="off">
         <?php if ($selected_category !== 'all'): ?>
