@@ -368,19 +368,19 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                                     const price = Math.round(game.price * 100);
 
                                     html += `
-                                <a href="product.php?id=\${game.id}" class="search-result-item">
-                                    <img src="\${imageUrl}" alt="\${game.name}" onerror="this.src='./media/placeholder.jpg'">
+                                <a href="product.php?id=${game.id}" class="search-result-item">
+                                    <img src="${imageUrl}" alt="${game.name}" onerror="this.src='./media/placeholder.jpg'">
                                     <div class="search-result-info">
-                                        <div class="search-result-name">\${game.name}</div>
-                                        <div class="search-result-category">\${game.category_name || 'Unknown'}</div>
+                                        <div class="search-result-name">${game.name}</div>
+                                        <div class="search-result-category">${game.category_name || 'Unknown'}</div>
                                     </div>
-                                    <div class="search-result-price">\${price.toLocaleString()} coins</div>
+                                    <div class="search-result-price">${price.toLocaleString()} coins</div>
                                 </a>
                             `;
                                 });
 
                                 if (data.games.length > 5) {
-                                    html += `<div class="search-more">+\${data.games.length - 5} more results</div>`;
+                                    html += `<div class="search-more">+${data.games.length - 5} more results</div>`;
                                 }
 
                                 html += '</div>';
