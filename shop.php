@@ -3,6 +3,7 @@ require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
 require_once 'classes/Category.php';
+require_once 'classes/CSRF.php';
 
 session_start();
 
@@ -32,6 +33,11 @@ if (isset($_GET['logout']) && $_GET['logout'] === '1') {
 
 // Handle the wishlist additions/removals
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wishlist_action'])) {
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || !CSRF::validateToken($_POST['csrf_token'])) {
+        die('Invalid CSRF token');
+    }
+
     $game_id = intval($_POST['game_id']);
 
     if ($_POST['wishlist_action'] === 'add') {
@@ -163,6 +169,7 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                             <div class="wishlist-overlay">
                                 <?php if (in_array($game['id'], $wishlist_game_ids)): ?>
                                     <form method="post" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="<?php echo CSRF::getToken(); ?>">
                                         <input type="hidden" name="wishlist_action" value="remove">
                                         <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
                                         <button type="submit" class="wishlist-heart-btn in-wishlist" title="Remove from wishlist">
@@ -171,6 +178,7 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                                     </form>
                                 <?php else: ?>
                                     <form method="post" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="<?php echo CSRF::getToken(); ?>">
                                         <input type="hidden" name="wishlist_action" value="add">
                                         <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
                                         <button type="submit" class="wishlist-heart-btn not-in-wishlist" title="Add to wishlist">
