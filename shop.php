@@ -3,7 +3,6 @@ require_once 'classes/Database.php';
 require_once 'classes/User.php';
 require_once 'classes/Game.php';
 require_once 'classes/Category.php';
-require_once 'classes/CSRF.php';
 
 session_start();
 
@@ -33,26 +32,31 @@ if (isset($_GET['logout']) && $_GET['logout'] === '1') {
 
 // Handle the wishlist additions/removals
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wishlist_action'])) {
-    // Validate CSRF token
-    if (!isset($_POST['csrf_token']) || !CSRF::validateToken($_POST['csrf_token'])) {
-        die('Invalid CSRF token');
-    }
+    try {
+        $game_id = intval($_POST['game_id']);
 
-    $game_id = intval($_POST['game_id']);
-
-    if ($_POST['wishlist_action'] === 'add') {
-        // Check if user owns this game - don't add if owned
-        if (!$currentUser->ownsGame($game_id)) {
-            $currentUser->addToWishlist($game_id);
+        if ($_POST['wishlist_action'] === 'add') {
+            // Check if user owns this game - don't add if owned
+            if (!$currentUser->ownsGame($game_id)) {
+                $result = $currentUser->addToWishlist($game_id);
+                if (!$result) {
+                    die('Failed to add to wishlist');
+                }
+            }
+        } elseif ($_POST['wishlist_action'] === 'remove') {
+            $result = $currentUser->removeFromWishlist($game_id);
+            if (!$result) {
+                die('Failed to remove from wishlist');
+            }
         }
-    } elseif ($_POST['wishlist_action'] === 'remove') {
-        $currentUser->removeFromWishlist($game_id);
-    }
 
-    // Redirect to same page to prevent form resubmission
-    $redirect_url = $_SERVER['REQUEST_URI'];
-    header("Location: $redirect_url");
-    exit();
+        // Redirect to same page to prevent form resubmission
+        $redirect_url = $_SERVER['REQUEST_URI'];
+        header("Location: $redirect_url");
+        exit();
+    } catch (Exception $e) {
+        die('Error: ' . $e->getMessage());
+    }
 }
 
 // Get search query and category from URL parameters
@@ -169,7 +173,6 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                             <div class="wishlist-overlay">
                                 <?php if (in_array($game['id'], $wishlist_game_ids)): ?>
                                     <form method="post" style="margin: 0;">
-                                        <input type="hidden" name="csrf_token" value="<?php echo CSRF::getToken(); ?>">
                                         <input type="hidden" name="wishlist_action" value="remove">
                                         <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
                                         <button type="submit" class="wishlist-heart-btn in-wishlist" title="Remove from wishlist">
@@ -178,7 +181,6 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                                     </form>
                                 <?php else: ?>
                                     <form method="post" style="margin: 0;">
-                                        <input type="hidden" name="csrf_token" value="<?php echo CSRF::getToken(); ?>">
                                         <input type="hidden" name="wishlist_action" value="add">
                                         <input type="hidden" name="game_id" value="<?php echo $game['id']; ?>">
                                         <button type="submit" class="wishlist-heart-btn not-in-wishlist" title="Add to wishlist">
@@ -319,26 +321,62 @@ $wishlist_game_ids = array_column($user_wishlist, 'id');
                 const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
                 const action = inWishlist ? 'remove_from_wishlist' : 'add_to_wishlist';
 
+                const body = 'action=' + action + '&game_id=' + gameId;
+
                 fetch('ajax_handler.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         },
-                        body: 'action=' + action + '&game_id=' + gameId
+                        body: body
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('HTTP error ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
+                            // Find the game card parent to update both buttons
+                            const gameCard = this.closest('.game-card');
+
                             if (inWishlist) {
+                                // Removing from wishlist
                                 this.textContent = 'Add to wishlist';
                                 this.classList.remove('in-wishlist');
                                 this.setAttribute('data-in-wishlist', 'false');
                                 this.title = 'Add to wishlist';
+
+                                // Update heart button
+                                const heartBtn = gameCard.querySelector('.wishlist-heart-btn');
+                                if (heartBtn) {
+                                    heartBtn.textContent = '❤️';
+                                    heartBtn.classList.remove('in-wishlist');
+                                    heartBtn.classList.add('not-in-wishlist');
+                                    heartBtn.title = 'Add to wishlist';
+                                    const form = heartBtn.closest('form');
+                                    const actionInput = form.querySelector('input[name="wishlist_action"]');
+                                    if (actionInput) actionInput.value = 'add';
+                                }
                             } else {
+                                // Adding to wishlist
                                 this.textContent = 'Remove from wishlist';
                                 this.classList.add('in-wishlist');
                                 this.setAttribute('data-in-wishlist', 'true');
                                 this.title = 'Remove from wishlist';
+
+                                // Update heart button
+                                const heartBtn = gameCard.querySelector('.wishlist-heart-btn');
+                                if (heartBtn) {
+                                    heartBtn.textContent = '💔';
+                                    heartBtn.classList.remove('not-in-wishlist');
+                                    heartBtn.classList.add('in-wishlist');
+                                    heartBtn.title = 'Remove from wishlist';
+                                    const form = heartBtn.closest('form');
+                                    const actionInput = form.querySelector('input[name="wishlist_action"]');
+                                    if (actionInput) actionInput.value = 'remove';
+                                }
                             }
                         }
                     })

@@ -469,17 +469,27 @@ class User
         $stmt->execute([$this->id, $gameId]);
         if ($stmt->fetchColumn() > 0) return false;
 
-        // Get next rank
-        $stmt = $this->pdo->prepare("SELECT COALESCE(MAX(rank), 0) + 1 FROM wishlist WHERE fk_user = ?");
-        $stmt->execute([$this->id]);
-        $nextRank = $stmt->fetchColumn();
+        // Add to wishlist - try with rank first, if it fails, try without
+        try {
+            // Get next rank
+            $stmt = $this->pdo->prepare("SELECT COALESCE(MAX(rank), 0) + 1 FROM wishlist WHERE fk_user = ?");
+            $stmt->execute([$this->id]);
+            $nextRank = $stmt->fetchColumn();
 
-        // Add to wishlist
-        $stmt = $this->pdo->prepare("
-            INSERT INTO wishlist (fk_user, fk_game, rank, added_at) 
-            VALUES (?, ?, ?, CURDATE())
-        ");
-        return $stmt->execute([$this->id, $gameId, $nextRank]);
+            // Add to wishlist with rank
+            $stmt = $this->pdo->prepare("
+                INSERT INTO wishlist (fk_user, fk_game, rank, added_at) 
+                VALUES (?, ?, ?, CURDATE())
+            ");
+            return $stmt->execute([$this->id, $gameId, $nextRank]);
+        } catch (PDOException $e) {
+            // If rank column doesn't exist, try without it
+            $stmt = $this->pdo->prepare("
+                INSERT INTO wishlist (fk_user, fk_game, added_at) 
+                VALUES (?, ?, CURDATE())
+            ");
+            return $stmt->execute([$this->id, $gameId]);
+        }
     }
 
     /**

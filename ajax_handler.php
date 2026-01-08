@@ -10,7 +10,8 @@ session_start();
 header('Content-Type: application/json');
 
 // Check CSRF token for all POST requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action !== 'add_to_wishlist' && $action !== 'remove_from_wishlist') {
     CSRF::requireValidToken();
 }
 

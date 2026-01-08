@@ -33,7 +33,12 @@ class CSRF
             session_start();
         }
 
-        return $_SESSION['csrf_token'] ?? null;
+        // Auto-generate token if it doesn't exist
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        return $_SESSION['csrf_token'];
     }
 
     /**
@@ -48,7 +53,7 @@ class CSRF
         }
 
         $sessionToken = $_SESSION['csrf_token'] ?? '';
-        
+
         if (empty($sessionToken) || empty($token)) {
             return false;
         }
